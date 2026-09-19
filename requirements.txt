@@ -1,0 +1,5 @@
+edge-tts>=7.0,<8.0
+requests>=2.31,<3
+Pillow>=10.0,<13
+PyYAML>=6.0,<7
+imageio-ffmpeg>=0.5,<1

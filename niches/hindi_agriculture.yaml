@@ -1,0 +1,116 @@
+name: hindi_agriculture
+display_name: "Agri Learning Point — Hindi Krishi"
+description: "Hindi agriculture shorts: fasal, khaad, sinchai, sarkari yojana, mandi bhav, mausam. Practical, source-backed, no miracle claims."
+language: "hi"
+
+script:
+  tone: "bharosemand, practical, desi — jaise ek tajurbekar kisan dost samjha raha ho"
+  pacing: "seedha kaam ki baat; pehle fayda, phir tarika, phir savdhani"
+  perspective: "kisan ka dost — na guru, na salesman"
+  word_count: "120 to 150"   # Hindi me bolne par ~45-55 sec
+  hooks:
+    - id: galti_warn
+      template: "किसान भाई, {topic} में यह एक गलती फसल को खा जाएगी!"
+      when: "common mistake / nuksan wale topics"
+    - id: tariqa
+      template: "{crop} में पत्तियां पीली? असली वजह और इलाज — 40 second में।"
+      when: "crop care / deficiency topics"
+    - id: yojana
+      template: "सरकारी योजना का पैसा खाते में क्यों नहीं आया? तीन वजह सुन लो।"
+      when: "sarkari yojana / subsidy topics"
+    - id: bhav
+      template: "मंडी में {crop} के भाव आज — देखो क्या चल रहा है।"
+      when: "mandi bhav / market topics"
+    - id: mausam
+      template: "बारिश से पहले यह एक काम नहीं किया तो पछताओगे।"
+      when: "weather / season topics"
+  cta_variants:
+    - "Agri Learning Point से जुड़े रहिए — रोज़ एक काम की बात।"
+    - "किसान भाइयों तक शेयर ज़रूर करें।"
+    - "अपने इलाक़े की फसल कमेंट में लिखो।"
+    - "पूरा तरीका जानने के लिए फॉलो करते रहो।"
+  forbidden_phrases:
+    # AI-slop + khatarnak misinformation — kabhi nahi likhna
+    - "चमत्कारी नुस्खा"
+    - "100% गारंटी"
+    - "रातोंरात अमीर"
+    - "वैज्ञानिक हैरान"
+    - "सरकार छिपा रही है"
+    - "एक ही दवा से सब ठीक"
+    - "दस गुना मुनाफ़ा"
+    - "जादुई"
+  structure:
+    opening: "Seedha fayde ya khatre se shuru karo — khet ki baat, book ki nahi."
+    middle: "Step-by-step tarika; matra/dose sahi-sahi (utha: 5% urea = 50g/10L). Anuman nahi — research stage ke source se hi number lo."
+    closing: "Ek yaad rakhne wali salah + CTA. Kabhi jhootha promise nahi."
+
+visuals:
+  style: "asli khet, fasal close-up, mitti, tractor, mandi — real India, not US farm stock"
+  mood: "hara-bhara, mehnat, umeed"
+  color_palette: ["#1B4D2E", "#2E7D32", "#7CB342", "#F9A825", "#FFF8E1"]
+  subjects:
+    prefer:
+      - "green wheat or mustard field"
+      - "drip irrigation in Indian farm"
+      - "hands holding dark healthy soil"
+      - "farmer working in field, golden hour"
+      - "vegetable mandi crates"
+    avoid:
+      - "cartoon clipart plants"
+      - "US combine harvester stock"
+      - "neon graphics"
+      - "whiteboard animation"
+  prompt_suffix: "Indian agriculture, realistic, golden hour, shallow depth of field, documentary style"
+
+voice:
+  pace: "thoda thehra hua, ~140 words per minute Hindi"
+  energy: "garmajoshi bhara, bharosemand — overhyped salesman nahi"
+  suggested_voices:
+    edge_tts:
+      hi: "hi-IN-MadhurNeural"      # primary
+      hi_fallback: "hi-IN-SwaraNeural"
+
+fonts:
+  devanagari:
+    body: "Noto Sans Devanagari"
+    display: "Baloo 2"              # thumbnail ke bold text ke liye
+    alt: "Mukta"
+
+captions:   # abhi disabled — baad me on hoga
+  enabled: false
+  highlight_color: "#F9A825"
+  words_per_group: 3
+
+music:
+  mood: "light desi folk — flute/dholak, no lyrics, no copyright"
+  energy: "medium, positive"
+  tags: ["folk", "flute", "acoustic", "desi", "kisan"]
+  duck_volume_speech: 0.10
+  duck_volume_gap: 0.22
+
+thumbnail:
+  style: "fasal close-up par bold Devanagari text, yellow accent, subject frame ka 70%"
+  accent_color: "#F9A825"
+  max_words: 4
+
+topic_seeds:
+  - "गेहूं में यूरिया कब और कितना"
+  - "सरसों में तेल का प्रतिशत बढ़ाने का तरीका"
+  - "आलू की झुलसा बीमारी रोकथाम"
+  - "प्याज भंडारण का देसी तरीका"
+  - "ड्रिप इरिगेशन सरकारी सब्सिडी"
+  - "वर्मीकम्पोस्ट बनाने का सही तरीका"
+  - "PM किसान किस्त की स्थिति चेक करो"
+  - "मृदा स्वास्थ्य कार्ड कैसे पढ़ें"
+  - "नीम तेल छिड़काव का सही घोल"
+  - "मल्चिंग से पानी की बचत"
+  - "मानसून पूर्व खेत तैयारी"
+  - "टमाटर में फल-छिद्रक की रोकथाम"
+
+discovery:
+  # Research gate — har number/claim in sources se trace ho, training knowledge se nahi
+  sources:
+    - "icar.gov.in"
+    - "pmkisan.gov.in"
+    - "imdagromet.gov.in"
+    - "krishijagran.com"

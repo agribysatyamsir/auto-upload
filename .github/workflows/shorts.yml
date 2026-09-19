@@ -1,0 +1,58 @@
+name: shorts
+
+on:
+  schedule:
+    - cron: "0 7 * * *"          # 12:30 IST — 1 video/day
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional: specific topic"
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: deps
+        run: pip install -r requirements.txt
+
+      - name: pipeline
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NICHE: hindi_agriculture
+          PRIVACY_STATUS: unlisted
+          TOPIC: ${{ github.event.inputs.topic || '' }}
+        run: python main.py
+
+      # state commit — push-race safe, [skip ci] taaki dobara workflow na chale
+      - name: commit state
+        if: always()
+        run: |
+          git config user.name "shorts-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add content_plan.json state/ output/script.json 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -m "state: daily run [skip ci]"
+          for i in 1 2 3; do
+            git fetch origin main && git reset --soft origin/main && \
+            git add content_plan.json state/ 2>/dev/null && \
+            git commit -m "state: daily run [skip ci]" 2>/dev/null; \
+            git push origin main && break || sleep 5
+          done

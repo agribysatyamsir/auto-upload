@@ -1,0 +1,17 @@
+# ── SECRETS — KABHI COMMIT MAT KARNA ──
+client_secrets.json
+token.json
+credentials.json
+.env
+*.pem
+
+# ── generated ──
+output/
+*.mp4
+__pycache__/
+*.pyc
+.venv/
+
+# ── state (yeh commit HOGA, isliye yahan nahi) ──
+# content_plan.json  → tracked
+# state/             → tracked
