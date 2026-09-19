@@ -53,17 +53,18 @@ def main() -> int:
         sc = llm.make_script(niche, topic)
         (run / "script.json").write_text(json.dumps(sc, ensure_ascii=False, indent=2),
                                          encoding="utf-8")
-        print(f"[script] {sc['words']} words | hook: {sc['hook']}")
+        print(f"[script] {sc['words']} words | {len(sc['beats'])} beats | hook: {sc['beats'][0]['t']}")
 
         # 2) TTS — fail-closed, +25% rate (natural pace)
         voices = [niche["voice"]["suggested_voices"]["edge_tts"]["hi"],
                   niche["voice"]["suggested_voices"]["edge_tts"].get("hi_fallback",
                                                                      "hi-IN-SwaraNeural")]
-        audio = tts.synth(sc["narration"], voices, run / "narration.mp3")
-        audio_dur = render.duration(audio)
+        # beat-wise TTS → exact durations → voice-image SYNC
+        texts = [b["t"] for b in sc["beats"]]
+        audio, durs = tts.synth_beats(texts, voices, run)
 
-        # 3) visuals — DENSE mix (12-24 scenes, ~2.2s/scene)
-        scenes = visuals.build_scenes(niche, sc, run, audio_dur)
+        # 3) visuals — per-beat matched footage (sync scenes)
+        scenes = visuals.build_synced(niche, sc, run, durs)
 
         # 4) render — effects + xfade transitions + ducked BGM
         music = pick_music(topic)
@@ -74,7 +75,7 @@ def main() -> int:
 
         # 5) thumbnail + upload — fail-closed
         thumb = visuals.make_thumbnail(niche, sc, run)
-        desc = sc.get("hook", "") + " | " + niche["display_name"]
+        desc = sc["beats"][0]["t"] + " | " + niche["display_name"]
         if music:
             desc += "\n🎵 Music: Kevin MacLeod (incompetech.com), CC-BY"
         res = uploader.upload(video, sc["title"], desc,

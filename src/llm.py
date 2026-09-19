@@ -28,36 +28,50 @@ def check_forbidden(text: str, forbidden: list) -> list:
 def make_script(niche: dict, topic: str) -> dict:
     s = niche["script"]
     forbidden = s["forbidden_phrases"]
-    hooks = " | ".join(h["template"] for h in s["hooks"])
-    base = f"""Tum "{niche['display_name']}" channel ke liye Hindi YouTube Shorts likhte ho.
+    formulas = " | ".join(s.get("hook_formulas", [])[:6])
+    base = f"""Tum "{niche['display_name']}" ke liye viral Hindi YouTube Shorts likhte ho.
 Topic: {topic}
 Tone: {s['tone']}
-Structure: opening={s['structure']['opening']} middle={s['structure']['middle']} closing={s['structure']['closing']}
-Hook style (copy mat karo, samjho): {hooks}
-Word limit: narration {s['word_count']} words, Devanagari Hindi.
-FORBIDDEN (kabhi mat likho): {', '.join(forbidden)}
-Number/dose/matra sirf tab likho jab 100% pakka ho; warna general salah do.
+
+BEAT-WISE SCRIPT likho — 12 se 15 BEATS (har beat = ek visual scene, voice-image sync):
+- beat0 = HOOK (6-9 words): seedha shock/galat-fehmi/nuksaan. Formulas: {formulas}
+  KABHI start mat karo: "welcome", "aaj hum", "dosto", "namaskar", "kisan bhai"
+- beat1-2 = agitation: galti ka nuksaan, dard (chhote vakya)
+- beat3.. = solution ke chhote concrete steps: time, matra, tarika. Har beat me SIRF ek baat
+- aakhri beat = CTA: SHARE + SUBSCRIBE, value se jod kar
+
+Rules:
+- Har beat: EXACTLY 6-10 words ki ek boli jaane wali poori line (ek saans me bole)
+- Beat text = sirf dialogue — keyword list/adhura vakya KABHI nahi
+- Har beat grammatically POORI line ho (jaise "फसल घटती" adhura hai — aisa nahi)
+- Har beat ke saath "q": 2-4 English words ka visual query — jo EXACT is line
+  par screen par dikhega (voice-image match)
+- Total narration {s['word_count']} words
+- FORBIDDEN: {', '.join(forbidden)}
+- Number/dose sirf 100% pakka ho tab
+
 JSON do:
-{{"title":"40-60 chars Devanagari title","hook":"pehle 2 second ki line","narration":"poori script","points":["3 on-screen card bullets, har ek 3-6 words"],"keywords":["4-6 English keywords for footage search"],"cta":"CTA line"}}"""
+{{"title":"40-60 chars Devanagari","beats":[{{"t":"spoken line","q":"visual query"}} x12-15],"cta":"share+subscribe line"}}"""
 
     prompt = base
     for attempt in range(2):
         try:
             out = generate(prompt)
-        except RuntimeError as e:
+        except RuntimeError:
             if attempt == 0:
                 time.sleep(15)
                 continue
             raise
-        blob = (out.get("hook", "") + out.get("narration", "") + out.get("title", ""))
+        beats = out.get("beats") or []
+        narr = " ".join(b.get("t", "") for b in beats)
+        blob = narr + out.get("title", "")
         bad = check_forbidden(blob, forbidden)
-        words = len(out.get("narration", "").split())
-        if bad:
-            prompt = base + f"\n\nPICHLA OUTPUT REJECT hua. Forbidden phrases mile: {bad}. Inhe dobara MAT likho."
+        words = len(narr.split())
+        if bad or len(beats) < 10 or not (90 <= words <= 180):
+            prompt = base + (f"\n\nREJECT: forbidden={bad}, beats={len(beats)}, words={words}. "
+                             f"12-15 beats (har beat 6-10 words), 110-150 words, clean phrases.")
             continue
-        if not (60 <= words <= 200):
-            prompt = base + f"\n\nPICHLA OUTPUT REJECT: narration {words} words thi. {s['word_count']} words me likho."
-            continue
+        out["narration"] = narr
         out["words"] = words
         return out
     raise RuntimeError("SCRIPT_VALIDATION_FAILED after bounded retries")

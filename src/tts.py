@@ -57,3 +57,28 @@ def synth(text: str, voices: list, out: Path) -> Path:
     if wav.stat().st_size >= MIN_BYTES:
         return wav
     raise RuntimeError("TTS_FAIL_CLOSED: koi voice kaam nahi kara")
+
+
+def synth_beats(texts: list, voices: list, run: Path):
+    """Beat-wise TTS → exact per-beat durations → concat narration.
+    Yehi voice-image sync ki chaabi hai: har scene ki duration = us beat
+    ki audio duration, isliye visual switch hota hai jahan sentence badalta hai."""
+    from . import render
+    durs, files = [], []
+    for i, t in enumerate(texts):
+        p = run / f"beat{i}.mp3"
+        synth(t, voices, p)
+        durs.append(render.duration(p))
+        files.append(p)
+    lst = run / "beats.txt"
+    lst.write_text("".join(f"file '{f}'\n" for f in files))
+    out = run / "narration.mp3"
+    import subprocess
+    subprocess.run([render.ffmpeg_bin(), "-y", "-f", "concat", "-safe", "0",
+                    "-i", str(lst), "-c", "copy", str(out)],
+                   capture_output=True, text=True, timeout=60)
+    if not out.exists() or out.stat().st_size < MIN_BYTES:
+        raise RuntimeError("TTS_CONCAT_FAIL")
+    print(f"[tts] {len(texts)} beats → {out.name} ({out.stat().st_size} bytes), "
+          f"durs={[round(d,1) for d in durs]}")
+    return out, durs

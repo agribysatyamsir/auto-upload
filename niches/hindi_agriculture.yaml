@@ -7,7 +7,14 @@ script:
   tone: "bharosemand, practical, desi — jaise ek tajurbekar kisan dost samjha raha ho"
   pacing: "seedha kaam ki baat; pehle fayda, phir tarika, phir savdhani"
   perspective: "kisan ka dost — na guru, na salesman"
-  word_count: "120 to 150"   # Hindi me bolne par ~45-55 sec
+  word_count: "110 to 150"   # ~35-45 sec Shorts sweet spot
+  hook_formulas:
+    - "यह एक गलती पूरी {topic} फसल खा जाती है"
+    - "{topic} का सच कोई नहीं बताता"
+    - "अगर आप भी {topic} में नुकसान उठा रहे हो, तो रुक जाओ"
+    - "90% किसान {topic} में यही भूल करते हैं"
+    - "यह वीडियो देखने के बाद {topic} कभी नहीं बिगड़ेगी"
+    - "{topic} — पहले यह गलती बंद करो"
   hooks:
     - id: galti_warn
       template: "किसान भाई, {topic} में यह एक गलती फसल को खा जाएगी!"
@@ -25,10 +32,9 @@ script:
       template: "बारिश से पहले यह एक काम नहीं किया तो पछताओगे।"
       when: "weather / season topics"
   cta_variants:
-    - "Agri Learning Point से जुड़े रहिए — रोज़ एक काम की बात।"
-    - "किसान भाइयों तक शेयर ज़रूर करें।"
-    - "अपने इलाक़े की फसल कमेंट में लिखो।"
-    - "पूरा तरीका जानने के लिए फॉलो करते रहो।"
+    - "वीडियो काम की लगे तो किसान भाइयों तक SHARE करो, और Agri Learning Point को SUBSCRIBE करो।"
+    - "SHARE करके किसी किसान की मदद करो — SUBSCRIBE बटन दबाना मत भूलना।"
+    - "अगली वीडियो में और काम की बात — SHARE + SUBSCRIBE जरूर करें।"
   forbidden_phrases:
     # AI-slop + khatarnak misinformation — kabhi nahi likhna
     - "चमत्कारी नुस्खा"

@@ -47,6 +47,9 @@ def _zoom_filter(variant: str, frames: int) -> str:
         "panl": "zoompan=z='1.20':x='(iw-iw/zoom)*min(on/{f},1)':y='ih/2-(ih/zoom/2)'",
         "panr": "zoompan=z='1.20':x='(iw-iw/zoom)*(1-min(on/{f},1))':"
                 "y='ih/2-(ih/zoom/2)'",
+        # text-cards: halka center-zoom — text margin (80px) kabhi na kate
+        "st":   "zoompan=z='min(zoom+0.0006,1.06)':x='iw/2-(iw/zoom/2)':"
+                "y='ih/2-(ih/zoom/2)'",
     }[variant]
     zp = zp.replace("{f}", str(max(1, frames)))
     return base + zp + f":d={frames}:s=1080x1920:fps={FPS},setsar=1"
@@ -86,12 +89,13 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
     segs, durs = [], []
     for i, sc in enumerate(scenes):
         seg = tmp / f"seg{i}.mp4"
+        want = max(1.2, float(sc.get("dur", per)))   # beat-synced durations
         if sc["type"] == "video":
-            durs.append(_seg_video(Path(sc["path"]), seg, per))
+            durs.append(_seg_video(Path(sc["path"]), seg, want))
         else:
-            _seg_image(Path(sc["path"]), seg, int(per * FPS),
-                       VARIANTS[(i + rng.randint(0, 1)) % 4])
-            durs.append(per)
+            var = "st" if sc.get("static") else VARIANTS[(i + rng.randint(0, 1)) % 4]
+            _seg_image(Path(sc["path"]), seg, int(want * FPS), var)
+            durs.append(want)
         segs.append(seg)
     print(f"[render] {n} segments ready (~{per:.1f}s each)")
 

@@ -139,7 +139,7 @@ def card(text, palette, out, big=False):
         d.text((80, y), ln, font=font, fill="#FFF8E1")
         y += int(fs * 1.35)
     img.save(out)
-    return {"type": "image", "path": out}
+    return {"type": "image", "path": out, "static": True}
 
 
 def make_thumbnail(niche: dict, sc: dict, run) -> str:
@@ -188,4 +188,58 @@ def build_scenes(niche: dict, sc: dict, run, audio_dur: float = 0) -> list:
     nv = sum(1 for s in scenes if s["type"] == "video")
     print(f"[visuals] scenes={len(scenes)} (videos={nv}, photos="
           f"{sum(1 for s in scenes if s['type'] == 'image' and 'photo' in str(s['path']))})")
+    return scenes
+
+
+def fetch_one(query: str, run, idx: int):
+    """Ek beat ke liye exact matched footage: video → photo → card-text."""
+    vids = pexels_videos([query], n=1)
+    if vids:
+        vids[0]["path"] = vids[0]["path"].rename(run / f"b{idx}.mp4")
+        return vids[0]
+    ph = pexels_photos([query], n=1)
+    if ph:
+        ph[0]["path"] = ph[0]["path"].rename(run / f"b{idx}.jpg")
+        return ph[0]
+    return None
+
+
+def _fetch_n(query: str, run, idx: int, k: int) -> list:
+    """Ek beat ke liye k clips: videos pehle, phir photos."""
+    out = pexels_videos([query], n=k)
+    if len(out) < k:
+        out += pexels_photos([query], n=k - len(out))
+    for j, o in enumerate(out):
+        o["path"] = o["path"].rename(run / f"b{idx}_{j}{o['path'].suffix}")
+    return out[:k]
+
+
+def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
+    """VOICE-IMAGE SYNC: har beat ka footage uski dur ke barabar screen pe.
+    LAMBE beats (>4.5s) multiple clips me split → 15+ cuts/40s guaranteed.
+    hook-card → per-beat matched footage → SHARE+SUBSCRIBE end-card."""
+    run.mkdir(parents=True, exist_ok=True)
+    pal = niche["visuals"]["color_palette"]
+    beats = sc["beats"]
+    scenes = []
+    h = card(beats[0]["t"], pal, run / "card0.png", big=True)
+    h["dur"] = durs[0]
+    scenes.append(h)
+    for i, b in enumerate(beats[1:-1], start=1):
+        k = max(1, round(durs[i] / 3.5)) if durs[i] > 4.5 else 1
+        clips = _fetch_n(b.get("q", "indian farm"), run, i, k)
+        if not clips:
+            clips = [card(b["t"], pal, run / f"cb{i}.png")]
+        share = durs[i] / len(clips)
+        for c in clips:
+            c["dur"] = round(share, 2)
+            scenes.append(c)
+    cta = sc.get("cta", "") or beats[-1]["t"]
+    if "शेयर" not in cta or "सब्सक्राइब" not in cta:
+        cta += "\nशेयर + सब्सक्राइब"
+    end = card(cta, pal, run / "cardN.png", big=True)
+    end["dur"] = durs[-1]
+    scenes.append(end)
+    nv = sum(1 for s in scenes if s["type"] == "video")
+    print(f"[visuals] SYNCED scenes={len(scenes)} (videos={nv}) from {len(beats)} beats")
     return scenes
