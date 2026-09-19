@@ -13,6 +13,24 @@ from . import config
 
 MAX_VIDEO_BYTES = 12_000_000
 
+# Pexels abstract query pe random popular footage lauta deta hai (club/dance etc).
+# Isliye query ko concrete agriculture nouns tak sanitize karte hain.
+AGRI_VOCAB = {"wheat", "field", "farm", "farmer", "fertilizer", "urea", "soil",
+              "irrigation", "water", "spray", "sprayer", "crop", "leaf", "leaves",
+              "plant", "seed", "seeds", "sowing", "harvest", "tractor", "rain",
+              "grain", "pesticide", "potato", "onion", "tomato", "mustard",
+              "cotton", "sugarcane", "corn", "rice", "paddy", "plants", "crops"}
+SAFE_Q = ["wheat field", "farmer spraying crops", "fertilizer soil",
+          "irrigation water", "green crop leaves", "wheat harvest",
+          "tractor field", "seeds sowing"]
+
+
+def sanitize_q(q: str, idx: int = 0) -> str:
+    toks = [t for t in q.lower().replace(",", " ").split() if t in AGRI_VOCAB]
+    if toks:
+        return " ".join(toks[:3])
+    return SAFE_Q[idx % len(SAFE_Q)]
+
 
 def _get(url, **kw):
     return requests.get(url, timeout=kw.pop("timeout", 30), **kw)
@@ -206,9 +224,10 @@ def fetch_one(query: str, run, idx: int):
 
 def _fetch_n(query: str, run, idx: int, k: int) -> list:
     """Ek beat ke liye k clips: videos pehle, phir photos."""
+    query = sanitize_q(query, idx)
     out = pexels_videos([query], n=k)
     if len(out) < k:
-        out += pexels_photos([query], n=k - len(out))
+        out += pexels_photos([sanitize_q(query, idx + 1)], n=k - len(out))
     for j, o in enumerate(out):
         o["path"] = o["path"].rename(run / f"b{idx}_{j}{o['path'].suffix}")
     return out[:k]

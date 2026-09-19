@@ -44,8 +44,9 @@ Rules:
 - Har beat: EXACTLY 6-10 words ki ek boli jaane wali poori line (ek saans me bole)
 - Beat text = sirf dialogue — keyword list/adhura vakya KABHI nahi
 - Har beat grammatically POORI line ho (jaise "फसल घटती" adhura hai — aisa nahi)
-- Har beat ke saath "q": 2-4 English words ka visual query — jo EXACT is line
-  par screen par dikhega (voice-image match)
+- Har beat ke saath "q": 2-4 English words ka CONCRETE visual query — sirf dikhti hui
+  cheez (wheat field / fertilizer / irrigation water / farmer hands / crop leaves /
+  soil / tractor). Abstract words (time, mistake, profit, stage) KABHI nahi
 - Total narration {s['word_count']} words
 - FORBIDDEN: {', '.join(forbidden)}
 - Number/dose sirf 100% pakka ho tab
