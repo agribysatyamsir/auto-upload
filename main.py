@@ -53,9 +53,8 @@ def main() -> int:
                                                                      "hi-IN-SwaraNeural")]
         audio = tts.synth(sc["narration"], voices, run / "narration.mp3")
 
-        # 3) visuals — Pexels optional, cards hamesha
-        scenes = visuals.pexels(sc.get("keywords", [])[:3], n=3)
-        scenes += visuals.make_cards(niche, sc, run)
+        # 3) visuals — video+photo+card mix (Shorts-only vertical)
+        scenes = visuals.build_scenes(niche, sc, run)
 
         # 4) render — fail-closed
         video = render.render(scenes, audio, run / "short.mp4")

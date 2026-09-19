@@ -30,6 +30,11 @@ jobs:
       - name: pipeline
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_KEYS: ${{ secrets.GEMINI_KEYS }}
+          GROQ_KEYS: ${{ secrets.GROQ_KEYS }}
+          SAMBANOVA_KEYS: ${{ secrets.SAMBANOVA_KEYS }}
+          MISTRAL_KEYS: ${{ secrets.MISTRAL_KEYS }}
+          OPENROUTER_KEYS: ${{ secrets.OPENROUTER_KEYS }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}

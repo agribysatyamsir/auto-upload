@@ -1,45 +1,24 @@
-"""Gemini: script + topics. JSON-mode, grounded optional, validation built-in.
+"""Gemini/multi-provider: script + topics. JSON-mode, validation built-in.
 
-Fail-closed: forbidden phrases / word-count pass na ho to bounded retry (max 2),
-warna RuntimeError — kabhi bhi bekaar script aage nahi jaati.
+Transport ab src.models.Registry ke through — provider/model change ho
+ya key mare, yahan kuch badalne ki zaroorat nahi.
 """
-import json
-import os
 import time
 
-import requests
+from . import models
 
-BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-
-
-def _key() -> str:
-    k = os.environ.get("GOOGLE_API_KEY", "")
-    if not k:
-        raise RuntimeError("GOOGLE_API_KEY missing")
-    return k
+_reg = None
 
 
-def generate(model: str, prompt: str, temperature: float = 0.9,
-             timeout: int = 90) -> dict:
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": temperature,
-                             "responseMimeType": "application/json"},
-    }
-    last = None
-    for attempt in range(3):
-        r = requests.post(f"{BASE}/{model}:generateContent?key={_key()}",
-                          json=payload, timeout=timeout)
-        if r.status_code == 429:
-            raise RuntimeError("GEMINI_RATE_LIMITED")
-        if r.status_code >= 500:          # transient — backoff karke retry
-            last = r
-            time.sleep(5 * (attempt + 1))
-            continue
-        r.raise_for_status()
-        return json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"])
-    last.raise_for_status()
-    raise RuntimeError("GEMINI_5XX_RETRIES_EXHAUSTED")
+def registry() -> models.Registry:
+    global _reg
+    if _reg is None:
+        _reg = models.Registry()
+    return _reg
+
+
+def generate(prompt: str, temperature_note: str = "") -> dict:
+    return registry().chat(prompt, json_mode=True)
 
 
 def check_forbidden(text: str, forbidden: list) -> list:
@@ -64,10 +43,10 @@ JSON do:
     prompt = base
     for attempt in range(2):
         try:
-            out = generate("gemini-2.5-flash", prompt)
+            out = generate(prompt)
         except RuntimeError as e:
-            if "RATE" in str(e) and attempt == 0:
-                time.sleep(20)
+            if attempt == 0:
+                time.sleep(15)
                 continue
             raise
         blob = (out.get("hook", "") + out.get("narration", "") + out.get("title", ""))
@@ -87,9 +66,7 @@ JSON do:
 def new_topics(niche: dict, used: list, n: int = 5) -> list:
     seeds = ", ".join(niche.get("topic_seeds", [])[:12])
     out = generate(
-        "gemini-2.5-flash-lite",
         f"Niche: {niche['display_name']}. Seed ideas: {seeds}.\n"
         f"Pehle use ho chuke topics (repeat MAT karo): {used[-30:]}\n"
-        f'{n} naye, alag, specific Hindi topics ka JSON do: {{"topics":["..."]}}',
-        temperature=1.0)
+        f'{n} naye, alag, specific Hindi topics ka JSON do: {{"topics":["..."]}}')
     return [t for t in out.get("topics", []) if t not in used][:n]
