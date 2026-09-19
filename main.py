@@ -5,12 +5,20 @@ render (fail-closed) → upload (fail-closed) → ledger → notify.
 
 Koi bhi stage fail = LOUD alert + exit 1. Silent success kabhi nahi.
 """
+import hashlib
 import json
 import os
 import sys
 import time
 
 from src import config, llm, notify, render, tts, uploader, visuals
+
+
+def pick_music(topic: str):
+    ms = sorted((config.ASSETS / "music").glob("*.mp3"))
+    if not ms:
+        return None
+    return ms[int(hashlib.md5(topic.encode()).hexdigest(), 16) % len(ms)]
 
 
 def load_plan() -> dict:
@@ -47,22 +55,29 @@ def main() -> int:
                                          encoding="utf-8")
         print(f"[script] {sc['words']} words | hook: {sc['hook']}")
 
-        # 2) TTS — fail-closed
+        # 2) TTS — fail-closed, +25% rate (natural pace)
         voices = [niche["voice"]["suggested_voices"]["edge_tts"]["hi"],
                   niche["voice"]["suggested_voices"]["edge_tts"].get("hi_fallback",
                                                                      "hi-IN-SwaraNeural")]
         audio = tts.synth(sc["narration"], voices, run / "narration.mp3")
+        audio_dur = render.duration(audio)
 
-        # 3) visuals — video+photo+card mix (Shorts-only vertical)
-        scenes = visuals.build_scenes(niche, sc, run)
+        # 3) visuals — DENSE mix (12-24 scenes, ~2.2s/scene)
+        scenes = visuals.build_scenes(niche, sc, run, audio_dur)
 
-        # 4) render — fail-closed
-        video = render.render(scenes, audio, run / "short.mp4")
+        # 4) render — effects + xfade transitions + ducked BGM
+        music = pick_music(topic)
+        video = render.render(scenes, audio, run / "short.mp4", music=music,
+                              duck=float(niche.get("music", {})
+                                         .get("duck_volume_speech", 0.10)),
+                              seed=topic)
 
         # 5) thumbnail + upload — fail-closed
         thumb = visuals.make_thumbnail(niche, sc, run)
-        res = uploader.upload(video, sc["title"],
-                              sc.get("hook", "") + " | " + niche["display_name"],
+        desc = sc.get("hook", "") + " | " + niche["display_name"]
+        if music:
+            desc += "\n🎵 Music: Kevin MacLeod (incompetech.com), CC-BY"
+        res = uploader.upload(video, sc["title"], desc,
                               thumb, privacy=config.env("PRIVACY_STATUS", "unlisted"))
 
         # 6) ledger + notify

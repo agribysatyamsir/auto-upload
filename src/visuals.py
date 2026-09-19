@@ -1,8 +1,8 @@
-"""Visuals: Shorts-only (9:16) engaging footage mix.
+"""Visuals: Shorts-only (9:16) DENSE, engaging footage mix.
 
-Order: Pexels portrait VIDEOS (curated/engaging) → Internet Archive
-(newest, CC) → Pexels photos → branded cards. Sirf vertical accept hota hai;
-har video file 12MB se chhoti (runner-friendly).
+Trending-Shorts pattern: fast cuts (~2s/scene) → 30s video me 15+ scenes.
+Order: hook card → Pexels vertical VIDEOS → Pexels photos → point cards → CTA.
+Vertical-only hard filter; video files <12MB.
 """
 import os
 
@@ -18,7 +18,7 @@ def _get(url, **kw):
     return requests.get(url, timeout=kw.pop("timeout", 30), **kw)
 
 
-def pexels_videos(queries: list, n: int = 2) -> list:
+def pexels_videos(queries: list, n: int = 4) -> list:
     key = os.environ.get("PEXELS_API_KEY", "")
     if not key:
         return []
@@ -26,13 +26,13 @@ def pexels_videos(queries: list, n: int = 2) -> list:
     for q in queries:
         try:
             r = _get("https://api.pexels.com/videos/search",
-                     params={"query": q, "orientation": "portrait", "per_page": 4},
+                     params={"query": q, "orientation": "portrait", "per_page": 5},
                      headers={"Authorization": key}, timeout=20)
             if not r.ok:
                 continue
             for v in r.json().get("videos", []):
                 files = [f for f in v.get("video_files", [])
-                         if (f.get("width") or 0) <= (f.get("height") or 1)   # vertical only
+                         if (f.get("width") or 0) <= (f.get("height") or 1)
                          and (f.get("file_size") or 0) < MAX_VIDEO_BYTES
                          and str(f.get("file_type")) == "video/mp4"]
                 if not files:
@@ -45,16 +45,40 @@ def pexels_videos(queries: list, n: int = 2) -> list:
                 p.write_bytes(data)
                 out.append({"type": "video", "path": p,
                             "dur": float(v.get("duration") or 5)})
-                print(f"[visuals] pexels video: {q} ({len(data)//1024}KB)")
+                print(f"[visuals] video: {q} ({len(data)//1024}KB)")
                 if len(out) >= n:
                     return out
         except Exception as e:
-            print(f"[visuals] pexels {q}: {e}")
+            print(f"[visuals] pexels-video {q}: {e}")
+    return out
+
+
+def pexels_photos(queries: list, n: int = 10) -> list:
+    key = os.environ.get("PEXELS_API_KEY", "")
+    if not key:
+        return []
+    out = []
+    for q in queries:
+        try:
+            r = _get("https://api.pexels.com/v1/search",
+                     params={"query": q, "orientation": "portrait", "per_page": 4},
+                     headers={"Authorization": key}, timeout=20)
+            if not r.ok:
+                continue
+            for ph in r.json().get("photos", []):
+                data = _get(ph["src"]["large"]).content
+                if len(data) > 10_000:
+                    p = config.RUN / f"photo{len(out)}.jpg"
+                    p.write_bytes(data)
+                    out.append({"type": "image", "path": p})
+                if len(out) >= n:
+                    return out
+        except Exception as e:
+            print(f"[visuals] photo {q}: {e}")
     return out
 
 
 def archive_videos(query: str, n: int = 1) -> list:
-    """Internet Archive — newest-first, CC/public-domain footage."""
     out = []
     try:
         r = _get("https://archive.org/advancedsearch.php",
@@ -76,7 +100,6 @@ def archive_videos(query: str, n: int = 1) -> list:
             p = config.RUN / f"ia{len(out)}.mp4"
             p.write_bytes(data)
             out.append({"type": "video", "path": p, "dur": 6.0})
-            print(f"[visuals] archive video: {ident} ({len(data)//1024}KB)")
             if len(out) >= n:
                 break
     except Exception as e:
@@ -84,32 +107,7 @@ def archive_videos(query: str, n: int = 1) -> list:
     return out
 
 
-def pexels_photos(queries: list, n: int = 1) -> list:
-    key = os.environ.get("PEXELS_API_KEY", "")
-    if not key:
-        return []
-    out = []
-    for q in queries:
-        try:
-            r = _get("https://api.pexels.com/v1/search",
-                     params={"query": q, "orientation": "portrait", "per_page": 2},
-                     headers={"Authorization": key}, timeout=20)
-            if not r.ok:
-                continue
-            for ph in r.json().get("photos", [])[:1]:
-                data = _get(ph["src"]["large"]).content
-                if len(data) > 10_000:
-                    p = config.RUN / f"photo{len(out)}.jpg"
-                    p.write_bytes(data)
-                    out.append({"type": "image", "path": p})
-        except Exception as e:
-            print(f"[visuals] photo {q}: {e}")
-        if len(out) >= n:
-            break
-    return out
-
-
-# ── branded cards (template-first) ────────────────────────────────────────
+# ── branded cards ──────────────────────────────────────────────────────────
 def _wrap(d, text, font, max_w):
     lines, cur = [], ""
     for w in text.split():
@@ -161,24 +159,33 @@ def make_thumbnail(niche: dict, sc: dict, run) -> str:
     return str(out)
 
 
-def build_scenes(niche: dict, sc: dict, run) -> list:
-    """Shorts mix: hook card + videos + photo/cards + CTA card (max 6)."""
+def build_scenes(niche: dict, sc: dict, run, audio_dur: float = 0) -> list:
+    """Dense Shorts mix: ~2.2s/scene, min 12, max 24 scenes."""
     run.mkdir(parents=True, exist_ok=True)
     pal = niche["visuals"]["color_palette"]
     q = sc.get("keywords", [])[:3] or [sc.get("title", "farm")[:30]]
+    target = int(min(24, max(12, (audio_dur or 45) / 2.2)))
+
+    vids = pexels_videos(q, n=5) or archive_videos(q[0], n=2)
+    photos = pexels_photos(q, n=12)
+
     scenes = [card(sc["hook"], pal, run / "card0.png", big=True)]
+    pool = vids + photos
+    scenes += pool
 
-    vids = pexels_videos(q, n=2) or archive_videos(q[0], n=1)
-    scenes += vids
+    # point cards se gap bharo agar footage kam ho
+    for i, p in enumerate(sc.get("points", [])[:4]):
+        if len(scenes) >= target:
+            break
+        scenes.insert(2 + i * 3, card(p, pal, run / f"card{i + 1}.png"))
+    while len(scenes) < max(12, min(target, 12)):
+        scenes.insert(len(scenes) - 1, card(sc.get("points", [""])[0], pal,
+                                             run / f"pad{len(scenes)}.png"))
+        break
 
-    pts = sc.get("points", [])[:2]
-    photos = pexels_photos(q[1:2] or q[:1], n=1)
-    if photos:
-        scenes += photos
-    for i, p in enumerate(pts):
-        scenes.append(card(p, pal, run / f"card{i + 1}.png"))
     scenes.append(card(sc.get("cta", ""), pal, run / "cardN.png"))
-
-    vids_n = sum(1 for s in scenes if s["type"] == "video")
-    print(f"[visuals] scenes: {len(scenes)} (videos={vids_n})")
-    return scenes[:6]
+    scenes = scenes[:max(target, 8)]
+    nv = sum(1 for s in scenes if s["type"] == "video")
+    print(f"[visuals] scenes={len(scenes)} (videos={nv}, photos="
+          f"{sum(1 for s in scenes if s['type'] == 'image' and 'photo' in str(s['path']))})")
+    return scenes
