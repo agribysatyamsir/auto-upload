@@ -11,7 +11,7 @@ import os
 import sys
 import time
 
-from src import config, llm, notify, render, tts, uploader, visuals
+from src import config, llm, notify, render, script_agent, tts, uploader, visuals
 
 
 def pick_music(topic: str):
@@ -49,8 +49,8 @@ def main() -> int:
     notify.send(f"🎬 Shuru: {topic}")
 
     try:
-        # 1) script — validated, bounded retries
-        sc = llm.make_script(niche, topic)
+        # 1) script — Writer+Critic agents, KB-trained, validated
+        sc = script_agent.make_script(niche, topic)
         (run / "script.json").write_text(json.dumps(sc, ensure_ascii=False, indent=2),
                                          encoding="utf-8")
         print(f"[script] {sc['words']} words | {len(sc['beats'])} beats | hook: {sc['beats'][0]['t']}")

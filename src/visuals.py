@@ -5,11 +5,12 @@ Order: hook card → Pexels vertical VIDEOS → Pexels photos → point cards �
 Vertical-only hard filter; video files <12MB.
 """
 import os
+from pathlib import Path
 
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
-from . import config
+from . import config, gen, vision_qa
 
 MAX_VIDEO_BYTES = 12_000_000
 
@@ -222,6 +223,55 @@ def fetch_one(query: str, run, idx: int):
     return None
 
 
+# PHASE-LOCK: beat ki phase ke hisaab se search query me phase-word jodo,
+# taaki sowing bole to sowing dikhe — harvesting/paddy/carrot nahi.
+PHASE_Q = {"sowing": "sowing seeds field", "growth": "green crop leaves",
+           "treatment": "spraying fertilizer crops", "harvest": "harvesting wheat",
+           "result": "full grain wheat field", "soil": "soil field",
+           "general": "wheat farm"}
+
+
+def locked_q(b: dict, idx: int) -> str:
+    q = sanitize_q(b.get("q", ""), idx)
+    return f"{q} {PHASE_Q.get(str(b.get('phase', 'general')).lower(), PHASE_Q['general'])}"
+
+
+def _gen_asset(b: dict, i: int, run) -> dict | None:
+    """Beat ki vis-description se AI image (exact match guarantee) + vision-QA.
+    imp=3 wale beats ke liye image→video bhi try hota hai (best-effort)."""
+    vis = b.get("vis") or b.get("q", "indian wheat field")
+    p = run / f"g{i}.jpg"
+    got = None
+    for seed in (i * 13 + 1, i * 13 + 8):
+        if gen.gen_image(f"realistic vertical smartphone photo: {vis}, "
+                         f"indian farm, natural daylight, no text, no watermark",
+                         p, seed):
+            if vision_qa.frame_matches(p, vis, str(b.get("phase", ""))):
+                got = {"type": "image", "path": p}
+                break
+    if got is None and p.exists():
+        got = {"type": "image", "path": p}
+    if got and int(b.get("imp", 1) or 1) >= 3:
+        v = run / f"gv{i}.mp4"
+        if gen.gen_video(p, v):
+            got = {"type": "video", "path": v, "dur": 4.0}
+    return got
+
+
+def _asset_for(b: dict, i: int, run):
+    """IMPORTANT beats (imp>=2) → pehle AI-gen (exact match);
+    baaki → phase-locked search + vision-QA; mismatch par gen fallback."""
+    vis = b.get("vis") or b.get("q", "indian farm")
+    if int(b.get("imp", 1) or 1) >= 2:
+        g = _gen_asset(b, i, run)
+        if g:
+            return g
+    clips = _fetch_n(locked_q(b, i), run, i, 1)
+    if clips and vision_qa.frame_matches(clips[0]["path"], vis, str(b.get("phase", ""))):
+        return clips[0]
+    return _gen_asset(b, i, run)
+
+
 def _fetch_n(query: str, run, idx: int, k: int) -> list:
     """Ek beat ke liye k clips: videos pehle, phir photos."""
     query = sanitize_q(query, idx)
@@ -234,9 +284,10 @@ def _fetch_n(query: str, run, idx: int, k: int) -> list:
 
 
 def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
-    """VOICE-IMAGE SYNC: har beat ka footage uski dur ke barabar screen pe.
-    LAMBE beats (>4.5s) multiple clips me split → 15+ cuts/40s guaranteed.
-    hook-card → per-beat matched footage → SHARE+SUBSCRIBE end-card."""
+    """VOICE-IMAGE SYNC: har beat ka asset uski dur ke barabar screen pe.
+    imp>=2 → AI-generated exact visual; baaki → phase-locked search.
+    Footage scenes ko caption text milta hai (render burn karta hai).
+    hook-card → assets → SHARE+SUBSCRIBE end-card."""
     run.mkdir(parents=True, exist_ok=True)
     pal = niche["visuals"]["color_palette"]
     beats = sc["beats"]
@@ -245,14 +296,13 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
     h["dur"] = durs[0]
     scenes.append(h)
     for i, b in enumerate(beats[1:-1], start=1):
-        k = max(1, round(durs[i] / 3.5)) if durs[i] > 4.5 else 1
-        clips = _fetch_n(b.get("q", "indian farm"), run, i, k)
-        if not clips:
-            clips = [card(b["t"], pal, run / f"cb{i}.png")]
-        share = durs[i] / len(clips)
-        for c in clips:
-            c["dur"] = round(share, 2)
-            scenes.append(c)
+        f = _asset_for(b, i, run)
+        if f is None:
+            f = card(b["t"], pal, run / f"cb{i}.png")
+        f["dur"] = round(durs[i], 2)
+        if not f.get("static"):
+            f["text"] = b["t"]
+        scenes.append(f)
     cta = sc.get("cta", "") or beats[-1]["t"]
     if "शेयर" not in cta or "सब्सक्राइब" not in cta:
         cta += "\nशेयर + सब्सक्राइब"
@@ -260,5 +310,7 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
     end["dur"] = durs[-1]
     scenes.append(end)
     nv = sum(1 for s in scenes if s["type"] == "video")
-    print(f"[visuals] SYNCED scenes={len(scenes)} (videos={nv}) from {len(beats)} beats")
+    ng = sum(1 for s in scenes if "g" in Path(str(s["path"])).name[:2])
+    print(f"[visuals] SYNCED scenes={len(scenes)} (videos={nv}, gen={ng}) "
+          f"from {len(beats)} beats")
     return scenes

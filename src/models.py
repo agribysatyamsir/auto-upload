@@ -39,6 +39,19 @@ def _raise(r):
 
 
 # ── adapters ──────────────────────────────────────────────────────────────
+def _extract_json(text: str):
+    """Fences/trailing garbage tolerate karo: pehla { … aakhri }."""
+    t = text.strip()
+    if t.startswith("```"):
+        t = t.strip("`")
+        if t.startswith("json"):
+            t = t[4:]
+    a, b = t.find("{"), t.rfind("}")
+    if a != -1 and b > a:
+        return json.loads(t[a:b + 1])
+    return json.loads(t)
+
+
 def gem_list(key):
     r = requests.get(f"{GEM}/models?key={key}", timeout=15)
     _raise(r)
@@ -63,12 +76,21 @@ def groq_list(key):
 
 
 def groq_chat(key, model, prompt, jm):
-    r = requests.post(f"{GROQ}/chat/completions",
-                      headers={"Authorization": f"Bearer {key}"},
-                      json={"model": model, "messages": [{"role": "user", "content": prompt}]},
-                      timeout=90)
-    _raise(r)
-    return json.loads(r.json()["choices"][0]["message"]["content"])
+    body = {"model": model, "max_tokens": 4096,
+            "messages": [{"role": "user", "content": prompt}]}
+    if jm:
+        body["response_format"] = {"type": "json_object"}
+    last = None
+    for _ in range(2):  # truncation/garbage par ek retry
+        r = requests.post(f"{GROQ}/chat/completions",
+                          headers={"Authorization": f"Bearer {key}"},
+                          json=body, timeout=120)
+        _raise(r)
+        try:
+            return _extract_json(r.json()["choices"][0]["message"]["content"])
+        except Exception as e:
+            last = e
+    raise ValueError(f"groq json fail: {last}")
 
 
 def sam_list(key):
@@ -84,7 +106,7 @@ def sam_chat(key, model, prompt, jm):
                       json={"model": model, "messages": [{"role": "user", "content": prompt}]},
                       timeout=90)
     _raise(r)
-    return json.loads(r.json()["choices"][0]["message"]["content"])
+    return _extract_json(r.json()["choices"][0]["message"]["content"])
 
 
 def or_list(key):
@@ -103,12 +125,14 @@ def or_pick(ids):
 
 
 def or_chat(key, model, prompt, jm):
+    body = {"model": model, "messages": [{"role": "user", "content": prompt}]}
+    if jm:
+        body["response_format"] = {"type": "json_object"}
     r = requests.post(f"{OR}/chat/completions",
                       headers={"Authorization": f"Bearer {key}"},
-                      json={"model": model, "messages": [{"role": "user", "content": prompt}]},
-                      timeout=90)
+                      json=body, timeout=90)
     _raise(r)
-    return json.loads(r.json()["choices"][0]["message"]["content"])
+    return _extract_json(r.json()["choices"][0]["message"]["content"])
 
 
 def mis_list(key):
@@ -119,12 +143,14 @@ def mis_list(key):
 
 
 def mis_chat(key, model, prompt, jm):
+    body = {"model": model, "messages": [{"role": "user", "content": prompt}]}
+    if jm:
+        body["response_format"] = {"type": "json_object"}
     r = requests.post("https://api.mistral.ai/v1/chat/completions",
                       headers={"Authorization": f"Bearer {key}"},
-                      json={"model": model, "messages": [{"role": "user", "content": prompt}]},
-                      timeout=90)
+                      json=body, timeout=90)
     _raise(r)
-    return json.loads(r.json()["choices"][0]["message"]["content"])
+    return _extract_json(r.json()["choices"][0]["message"]["content"])
 
 
 # ── priority chain ─────────────────────────────────────────────────────────
