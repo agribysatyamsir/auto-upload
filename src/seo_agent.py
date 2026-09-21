@@ -89,17 +89,23 @@ def fallback_seo(topic: str, niche: dict) -> dict:
             "hashtags": hashtags, "keywords": keywords}
 
 
-def _fit_tags(tags: list, limit: int = 490) -> list:
+def _tag_cost(t: str) -> int:
+    """YouTube counting: space wale tags quote-wrap hote hain (+2), + comma."""
+    return len(t) + (2 if " " in t else 0) + 1
+
+
+def _fit_tags(tags: list, limit: int = 480) -> list:
     out, used = [], 0
     for t in tags:
         t = str(t).strip().strip("#").strip().lower()
         t = " ".join(t.split())
-        if not t or len(t) < 2 or len(t) > 60 or t in out:
+        if (not t or len(t) < 2 or len(t) > 40 or len(t.split()) > 4
+                or t in out):
             continue
-        if used + len(t) + 2 > limit:
+        if used + _tag_cost(t) > limit:
             break
         out.append(t)
-        used += len(t) + 2
+        used += _tag_cost(t)
     return out[:30]
 
 

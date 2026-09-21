@@ -30,24 +30,30 @@ def _tokens() -> str:
 
 
 def _safe_tags(tags: list | None) -> list:
-    """YouTube 400 invalidTags se bachao: saaf, dedup, total ≤490 chars."""
+    """YouTube 400 invalidTags se bachao. Real counting: space wale tags
+    quote-wrap (+2 chars), commas bhi count — total < 500."""
     out, used = [], 0
     for t in (tags or ["hindi", "shorts", "agriculture"]):
         t = " ".join(str(t).split()).strip().strip("#").strip()
-        if not t or len(t) > 60 or t.lower() in [o.lower() for o in out]:
+        if (not t or len(t) > 40 or len(t.split()) > 4
+                or t.lower() in [o.lower() for o in out]):
             continue
-        if used + len(t) + 2 > 490:
+        cost = len(t) + (2 if " " in t else 0) + 1
+        if used + cost > 480:
             break
         out.append(t)
-        used += len(t) + 2
+        used += cost
     return out[:30] or ["agriculture", "hindi", "shorts"]
 
 
 def upload(video: Path, title: str, description: str, thumb: Path | None,
            privacy: str = "unlisted", tags: list | None = None) -> dict:
     access = _tokens()
+    tg = _safe_tags(tags)
+    yt = sum(len(t) + (2 if " " in t else 0) + 1 for t in tg)
+    print(f"[upload] tags={len(tg)} yt-chars={yt}")
     meta = json.dumps({"snippet": {"title": title[:100], "description": description[:4800],
-                                   "tags": _safe_tags(tags),
+                                   "tags": tg,
                                    "categoryId": "27"},
                        "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False}}).encode()
     vid = video.read_bytes()

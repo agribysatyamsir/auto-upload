@@ -1,7 +1,7 @@
 {
  "gemini": {
-  "fails": 3,
-  "cooldown_until": 1789992076.0062287
+  "fails": 0,
+  "cooldown_until": 0
  },
  "groq": {
   "fails": 0,
