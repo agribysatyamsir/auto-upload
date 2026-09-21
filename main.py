@@ -11,7 +11,8 @@ import os
 import sys
 import time
 
-from src import config, llm, notify, render, script_agent, tts, uploader, visuals
+from src import (config, llm, notify, render, script_agent, tts, uploader,
+                 visual_agent, visuals)
 
 
 def pick_music(topic: str):
@@ -64,7 +65,7 @@ def main() -> int:
         audio, durs = tts.synth_beats(texts, voices, run)
 
         # 3) visuals — per-beat matched footage (sync scenes)
-        scenes = visuals.build_synced(niche, sc, run, durs)
+        scenes = visual_agent.build_synced(niche, sc, run, durs)
 
         # 4) render — effects + xfade transitions + ducked BGM
         music = pick_music(topic)

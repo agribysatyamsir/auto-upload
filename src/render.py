@@ -57,8 +57,9 @@ def _zoom_filter(variant: str, frames: int) -> str:
     return base + zp + f":d={frames}:s=1080x1920:fps={FPS},setsar=1"
 
 
-def caption_png(text: str, path: Path):
-    """Hindi subtitle transparent PNG (drawtext ki jagah — overlay filter)."""
+def caption_png(text: str, path: Path, burst: str = ""):
+    """Hindi subtitle transparent PNG (drawtext ki jagah — overlay filter).
+    burst = 2-4 word on-screen text pop (stat/emotion), top-center Baloo font."""
     from PIL import Image, ImageDraw, ImageFont
     words = text.split()
     lines, cur = [], ""
@@ -75,18 +76,27 @@ def caption_png(text: str, path: Path):
     img = Image.new("RGBA", (1080, 1920), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     font = ImageFont.truetype(config.font(), 62)
-    ws = [d.textlength(ln, font=font) for ln in lines]
-    bw = int(max(ws)) + 60
-    bh = len(lines) * 88 + 40
-    x0 = (1080 - bw) // 2
-    y0 = 1920 - 340 - bh
-    d.rounded_rectangle([x0, y0, x0 + bw, y0 + bh], radius=26,
-                        fill=(0, 0, 0, 150))
-    y = y0 + 20
-    for ln in lines:
-        w = d.textlength(ln, font=font)
-        d.text(((1080 - w) / 2, y), ln, font=font, fill=(255, 248, 225, 255))
-        y += 88
+    if lines:
+        ws = [d.textlength(ln, font=font) for ln in lines]
+        bw = int(max(ws)) + 60
+        bh = len(lines) * 88 + 40
+        x0 = (1080 - bw) // 2
+        y0 = 1920 - 340 - bh
+        d.rounded_rectangle([x0, y0, x0 + bw, y0 + bh], radius=26,
+                            fill=(0, 0, 0, 150))
+        y = y0 + 20
+        for ln in lines:
+            w = d.textlength(ln, font=font)
+            d.text(((1080 - w) / 2, y), ln, font=font, fill=(255, 248, 225, 255))
+            y += 88
+    if burst:
+        bf = ImageFont.truetype(config.font(display=True), 74)
+        bbw = int(d.textlength(burst, font=bf)) + 56
+        x0 = (1080 - bbw) // 2
+        d.rounded_rectangle([x0, 170, x0 + bbw, 282], radius=22,
+                            fill=(255, 152, 0, 215))
+        d.text(((1080 - d.textlength(burst, font=bf)) / 2, 188), burst,
+               font=bf, fill=(33, 33, 33, 255))
     img.save(path)
 
 
@@ -141,9 +151,9 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
         seg = tmp / f"seg{i}.mp4"
         want = max(1.2, float(sc.get("dur", per)))   # beat-synced durations
         ov = None
-        if sc.get("text"):
+        if sc.get("text") or sc.get("overlay"):
             ov = tmp / f"cap{i}.png"
-            caption_png(sc["text"], ov)
+            caption_png(sc.get("text", ""), ov, sc.get("overlay", ""))
         if sc["type"] == "video":
             durs.append(_seg_video(Path(sc["path"]), seg, want, ov))
         else:

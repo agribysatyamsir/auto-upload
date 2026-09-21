@@ -26,13 +26,18 @@ UPAR WALI KNOWLEDGE ko follow karke is topic pe SHORTS SCRIPT likho:
 Topic: {topic}
 Tone: {s['tone']} | Total words target: {s['word_count']}
 
-SIRF valid JSON do:
+SIRF valid JSON do (SECTION 8 ka SEGMENT BRIEF contract follow karo — har field
+lazmi, taaki Visual Agent bina soche exact footage dhoond/generate kar sake):
 {{"title":"40-60 chars Devanagari",
  "beats":[{{"t":"spoken Hindi line 5-9 words, grammatically poori, nayi jankari",
-            "vis":"english: concrete dikhti cheez + phase (e.g. 'hands sowing wheat seeds in soil')",
+            "vis":"english: SUBJECT + ACTION + SETTING (e.g. 'farmer hands dropping urea granules into soil rows')",
             "phase":"sowing|growth|treatment|harvest|result|general",
-            "imp":2,
-            "q":"2-4 english concrete nouns"}}],
+            "shot":"closeup|hands|medium|wide|aerial",
+            "motion":"zoomin|zoomout|pan|static",
+            "search_q":["primary 2-4 word concrete query","fallback query"],
+            "gen_prompt":"realistic vertical 9:16 photo, <vis>, indian farm, natural daylight, no text",
+            "overlay":"2-4 word on-screen text burst ya empty string",
+            "imp":2}}],
  "cta":"share+subscribe + loop cue, 6-14 words"}}
 beats: 12 se 15. beat0=hook (5-8 words, answer mat do), beat1-2=agitation
 (SIRF dard — solution yahan MAT batao), beech=solution steps (har beat ek nayi
@@ -48,8 +53,9 @@ aur poora FIXED script JSON lauto.
 OUTPUT JSON:
 {{"issues":["jo galat tha wo one-liner"],
  "title":"...", "cta":"...",
- "beats":[{{"t","vis","phase","imp","q"}} ...fixed...]}}
+ "beats":[{{"t","vis","phase","shot","motion","search_q","gen_prompt","overlay","imp"}} ...fixed...]}}
 IMPORTANT: poore 12-15 beats ka POORA JSON lauto — truncate ya summary KABHI nahi.
+Har beat ki SAB brief-fields (search_q, gen_prompt, shot, motion, overlay) rakho.
 Sab theek ho to issues=[] aur beats unchanged."""
 
 

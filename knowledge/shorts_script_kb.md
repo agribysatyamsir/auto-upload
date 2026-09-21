@@ -71,3 +71,35 @@ Writer + Critic dono ka training material. Har rule niche diye research sources
 7. CTA me share+subscribe + loop cue (hook ka zikr)
 8. forbidden phrases absent; koi angrezi jargon nahi
 9. payoff hook ka promise close karta hai
+10. har beat ka SEGMENT BRIEF poora hai (section 8) — search_q, gen_prompt, shot, motion
+
+## 8. SEGMENT BRIEF — Script→Visual Agent contract
+Script Agent ka MAIN kaam: har beat ko aisa "brief" banana ki Visual Agent bina
+soche samjhe ki kaunsi image/video search karni hai ya kya generate karna hai.
+Har beat me ye fields LAZMI hain:
+
+- "t": boli jaane wali Hindi line (5-9 words)
+- "vis": english scene description = SUBJECT + ACTION + SETTING
+  (e.g. "farmer hands dropping urea granules into soil rows")
+- "phase": sowing|growth|treatment|harvest|result|general
+- "shot": closeup | hands | medium | wide | aerial
+  (closeup/hands = detail/emotion; wide/aerial = context/scale)
+- "motion": zoomin | zoomout | pan | static (render isi se movement deta hai)
+- "search_q": [primary, fallback] — 2-4 word concrete english queries,
+  phase-locked (sowing beat → "sowing seeds field" jaisa). Abstract KABHI nahi.
+- "gen_prompt": AI image ke liye complete prompt:
+  "realistic vertical 9:16 photo, {vis}, indian farm, natural daylight, no text"
+- "overlay": on-screen 2-4 word text burst (stat/number/emotion) ya ""
+  (e.g. "20 kg/acre", "पहली गलती") — sound-off viewers ke liye
+- "imp": 1-3 (3 = hook/sabse important → exact-match AI-gen pehle)
+
+EXAMPLE (wheat urea topic):
+{"t":"पहली सिंचाई के बाद यूरिया डालो",
+ "vis":"farmer sprinkling urea granules beside irrigated wheat rows",
+ "phase":"treatment","shot":"hands","motion":"zoomin",
+ "search_q":["fertilizer spreading field","farmer urea wheat"],
+ "gen_prompt":"realistic vertical 9:16 photo, farmer sprinkling urea granules beside irrigated wheat rows, indian farm, natural daylight, no text",
+ "overlay":"सिंचाई के बाद","imp":3}
+
+Visual Agent isi brief se: imp>=2 → gen_prompt se AI image/video pehle;
+warna search_q chain; har asset pe vision-QA; fail → agla route; sab fail → card.
