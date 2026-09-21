@@ -1,18 +1,18 @@
 {
  "gemini": {
-  "fails": 0,
-  "cooldown_until": 0
+  "fails": 2,
+  "cooldown_until": 1789992733.825193
  },
  "groq": {
   "fails": 0,
   "cooldown_until": 0
  },
  "openrouter": {
-  "fails": 2,
-  "cooldown_until": 1789879631.7086618
+  "fails": 3,
+  "cooldown_until": 1789992741.9860034
  },
  "mistral": {
-  "fails": 2,
-  "cooldown_until": 1789879632.5154889
+  "fails": 3,
+  "cooldown_until": 1789992742.6642966
  }
 }
