@@ -1,0 +1,89 @@
+[
+ {
+  "i": 0,
+  "phase": "general",
+  "text": "जय हिंद दोस्तो! आज quick समझेंगे टिलेज — यानी जोताई।",
+  "q": "indian farmer standing in green crop field",
+  "dur": 5.35,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b0.mp3",
+  "cands": []
+ },
+ {
+  "i": 1,
+  "phase": "definition",
+  "text": "टिलेज क्या है? मिट्टी को पलटकर, बीज बोने लायक तैयार करना।",
+  "q": "tractor ploughing farm field fresh soil",
+  "dur": 5.59,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b1.mp3",
+  "cands": [
+   "demo_run/cand1_0o.jpg",
+   "demo_run/cand1_1o.jpg",
+   "demo_run/cand1_2o.jpg"
+  ]
+ },
+ {
+  "i": 2,
+  "phase": "types",
+  "text": "First — प्राइमरी टिलेज। हल या सबसॉइलर से गहरी पहली जुताई।",
+  "q": "mouldboard plough deep ploughing tractor field",
+  "dur": 5.64,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b2.mp3",
+  "cands": []
+ },
+ {
+  "i": 3,
+  "phase": "types",
+  "text": "Second — सेकेंडरी टिलेज। कुल्पा और पाटा से मिट्टी भुरभुरी, समतल।",
+  "q": "disc harrow cultivator leveling field soil",
+  "dur": 6.07,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b3.mp3",
+  "cands": [
+   "demo_run/cand3_0o.jpg"
+  ]
+ },
+ {
+  "i": 4,
+  "phase": "types",
+  "text": "और जीरो टिलेज — बिना जोते सीधे बुवाई। समय और ईंधन, दोनों बचे।",
+  "q": "no till seed drill machine sowing field",
+  "dur": 6.34,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b4.mp3",
+  "cands": []
+ },
+ {
+  "i": 5,
+  "phase": "benefits",
+  "text": "फायदे? खरपतवार खत्म, नमी बरकरार, और जड़ें मजबूत।",
+  "q": "healthy green crop roots dark moist soil",
+  "dur": 5.69,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b5.mp3",
+  "cands": []
+ },
+ {
+  "i": 6,
+  "phase": "limitations",
+  "text": "पर याद रखो — ज्यादा जुताई से मिट्टी कटती है, नमी उड़ती है।",
+  "q": "soil erosion dry cracked field water runoff",
+  "dur": 6.05,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b6.mp3",
+  "cands": []
+ },
+ {
+  "i": 7,
+  "phase": "exam",
+  "text": "Exam one-liner — टिलेज यानी seedbed, weed control और moisture conservation।",
+  "q": "student writing agriculture exam notes notebook",
+  "dur": 6.77,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b7.mp3",
+  "cands": []
+ },
+ {
+  "i": 8,
+  "phase": "cta",
+  "text": "फॉलो करें Agri Learning Point — share करो, subscribe जरूर करो।",
+  "q": "youtube subscribe bell icon red button",
+  "dur": 6.05,
+  "mp3": "/home/user/hindi-shorts-bot/demo_run/b8.mp3",
+  "cands": []
+ }
+]

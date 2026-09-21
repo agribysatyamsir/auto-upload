@@ -79,6 +79,7 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
     if f0 is None:
         f0 = visuals.card(beats[0]["t"], pal, run / "card0.png", big=True)
     f0["dur"] = durs[0]
+    f0["phase"] = str(beats[0].get("phase", ""))
     scenes.append(f0)
     for i, b in enumerate(beats[1:-1], start=1):
         f = plan_segment(b, i, run, durs[i])
@@ -92,6 +93,7 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
         if f is None:
             f = visuals.card(b["t"], pal, run / f"cb{i}.png")
         f["dur"] = round(durs[i], 2)
+        f["phase"] = str(b.get("phase", ""))
         if not f.get("static"):
             f["text"] = b["t"]
             f["overlay"] = b.get("overlay", "")
@@ -101,6 +103,7 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
         cta += "\nशेयर + सब्सक्राइब"
     end = visuals.card(cta, pal, run / "cardN.png", big=True)
     end["dur"] = durs[-1]
+    end["phase"] = "cta"
     scenes.append(end)
     nv = sum(1 for s in scenes if s["type"] == "video")
     routes = {}

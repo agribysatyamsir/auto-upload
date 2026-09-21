@@ -1,8 +1,8 @@
 """Search Agent — MULTIPLE SOURCES se footage candidates per segment-brief.
 
-Sources (priority): Pexels videos → Pixabay videos → Pexels photos →
-Pixabay photos → Google Images (scrape, no key) → Archive.org. Har candidate
-normalized:
+Sources (priority): GOOGLE IMAGES (user directive — exact-word match) →
+Pexels videos → Pixabay videos → Pexels photos → Pixabay photos →
+Archive.org. Har candidate normalized:
 {source, id, type, path, dur, w, h, size, tags}
 Dedup: ek run me same clip dobara nahi (USED ids).
 Research: OpenMontage multi-source corpus + AutoShorts Pexels→Pixabay fallback.
@@ -172,6 +172,77 @@ def pixabay_photo_cands(q: str, run, idx: int, n: int = 2) -> list:
     return out
 
 
+def openverse_cands(q: str, run, idx: int, n: int = 3) -> list:
+    """Openverse API — FREE, no key, web-bhar se exact-word images (CC)."""
+    out = []
+    try:
+        r = _get("https://api.openverse.org/v1/images/",
+                 params={"q": q, "page_size": min(8, max(n, 4))},
+                 headers={"User-Agent": "AgriLearningBot/1.0"}, timeout=25)
+        if not r.ok:
+            return out
+        for im in r.json().get("results", []):
+            u = im.get("url") or ""
+            if not u:
+                continue
+            cid = im.get("id") or u[-40:]
+            if ("openverse", cid) in USED:
+                continue
+            p = _save(u, f"cand{idx}_{len(out)}o.jpg", run, min_bytes=25_000)
+            if not p:
+                continue
+            USED.add(("openverse", cid))
+            out.append({"source": "openverse", "id": cid, "type": "image", "path": p,
+                        "dur": 5.0, "w": im.get("width") or 0, "h": im.get("height") or 0,
+                        "size": p.stat().st_size,
+                        "tags": " ".join(t.get("name", "") for t in im.get("tags", [])[:8])})
+            if len(out) >= n:
+                break
+        if out:
+            print(f"[search] openverse: {len(out)} images")
+    except Exception as e:
+        print(f"[search] openverse: {str(e)[:60]}")
+    return out
+
+
+def commons_cands(q: str, run, idx: int, n: int = 3) -> list:
+    """Wikimedia Commons — FREE, no key, real photos (proper UA zaroori)."""
+    out = []
+    try:
+        r = _get("https://commons.wikimedia.org/w/api.php", params={
+            "action": "query", "generator": "search",
+            "gsrsearch": f"filetype:bitmap {q}", "gsrnamespace": "6",
+            "gsrlimit": str(max(n, 4)), "prop": "imageinfo",
+            "iiprop": "url|size", "iiurlwidth": "1080", "format": "json"},
+            headers={"User-Agent": "AgriLearningBot/1.0 (agri education)"},
+            timeout=25)
+        if not r.ok:
+            return out
+        pages = (r.json().get("query") or {}).get("pages") or {}
+        for pg in pages.values():
+            ii = (pg.get("imageinfo") or [{}])[0]
+            u = ii.get("thumburl") or ii.get("url") or ""
+            if not u:
+                continue
+            cid = pg.get("title", u[-40:])
+            if ("commons", cid) in USED:
+                continue
+            p = _save(u, f"cand{idx}_{len(out)}c.jpg", run, min_bytes=25_000)
+            if not p:
+                continue
+            USED.add(("commons", cid))
+            out.append({"source": "commons", "id": cid, "type": "image", "path": p,
+                        "dur": 5.0, "w": ii.get("width") or 0, "h": ii.get("height") or 0,
+                        "size": p.stat().st_size, "tags": q})
+            if len(out) >= n:
+                break
+        if out:
+            print(f"[search] commons: {len(out)} images")
+    except Exception as e:
+        print(f"[search] commons: {str(e)[:60]}")
+    return out
+
+
 def google_image_cands(q: str, run, idx: int, n: int = 3) -> list:
     """Google Images — best-effort HTML scrape (koi API key nahi).
 
@@ -236,8 +307,10 @@ def search_all(brief: dict, run, idx: int, max_cands: int = 6) -> list:
           for k, q in enumerate(qs[:2]) if str(q).strip()]
     pool, per = [], 0
     for q in qs:
-        for fn in (pexels_video_cands, pixabay_video_cands,
-                   pexels_photo_cands, pixabay_photo_cands, google_image_cands):
+        # USER RULE: WEB-SEARCH images pehle (exact-word match) → stock
+        for fn in (openverse_cands, commons_cands, google_image_cands,
+                   pexels_video_cands, pixabay_video_cands,
+                   pexels_photo_cands, pixabay_photo_cands):
             got = fn(q, run, idx * 100 + per, 2)
             per += 1
             pool += got

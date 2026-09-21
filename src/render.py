@@ -19,6 +19,21 @@ PRE_W, PRE_H = 1620, 2880
 XF = 0.5   # longer, smoother blend (user directive: smooth transitions only)
 TRANSITIONS = ["fade", "dissolve", "smoothleft", "smoothright",
                "radial", "circleopen"]   # harsh slide/wipe/cover family hata di
+# USER: "ek hi pattern" na lage — har script-phase ka apna cut/zoom style
+PHASE_TRANS = {
+    "definition": ["fade", "dissolve"],
+    "types": ["smoothleft", "smoothright"],
+    "organic": ["smoothleft", "circleopen"],
+    "inorganic": ["smoothright", "radial"],
+    "benefits": ["circleopen", "radial"],
+    "limitations": ["fade", "smoothright"],
+    "exam": ["radial", "circleopen"],
+    "cta": ["fade", "dissolve"],
+}
+PHASE_XF = {"definition": 0.6, "exam": 0.6, "cta": 0.6}   # slow blends
+PHASE_VAR = {"definition": "zin", "types": "panl", "organic": "panr",
+             "inorganic": "panl", "benefits": "zout", "limitations": "zin",
+             "exam": "zin", "cta": "zin"}
 VARIANTS = ["zin", "zout", "panl", "panr"]
 
 
@@ -156,7 +171,9 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
         if sc["type"] == "video":
             durs.append(_seg_video(Path(sc["path"]), seg, want, ov))
         else:
-            var = "st" if sc.get("static") else VARIANTS[(i + rng.randint(0, 1)) % 4]
+            ph = str(sc.get("phase", ""))
+            var = ("st" if sc.get("static")
+                   else PHASE_VAR.get(ph, VARIANTS[(i + rng.randint(0, 1)) % 4]))
             _seg_image(Path(sc["path"]), seg, int(want * FPS), var, ov)
             durs.append(want)
         segs.append(seg)
@@ -166,16 +183,18 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
     acc, acc_dur = segs[0], durs[0]
     for i in range(1, n):
         nxt = tmp / f"xf{i}.mp4"
-        t = rng.choice(TRANSITIONS)
+        ph = str(scenes[i].get("phase", ""))
+        t = rng.choice(PHASE_TRANS.get(ph, TRANSITIONS))
+        xfd = PHASE_XF.get(ph, XF)
         cmd = [ffmpeg_bin(), "-y", "-i", str(acc), "-i", str(segs[i]),
                "-filter_complex",
-               f"[0:v][1:v]xfade=transition={t}:duration={XF}:"
-               f"offset={max(0.1, acc_dur - XF):.2f}[v]",
+               f"[0:v][1:v]xfade=transition={t}:duration={xfd}:"
+               f"offset={max(0.1, acc_dur - xfd):.2f}[v]",
                "-map", "[v]", "-c:v", "libx264", "-crf", "17",
                "-preset", "veryfast", "-pix_fmt", "yuv420p", str(nxt)]
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
         if p.returncode == 0 and nxt.exists():
-            acc_dur = acc_dur + durs[i] - XF
+            acc_dur = acc_dur + durs[i] - xfd
         else:
             print(f"[render] xfade {i} fail → hard cut")
             nxt = tmp / f"xc{i}.mp4"
