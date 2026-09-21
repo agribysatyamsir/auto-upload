@@ -9,6 +9,9 @@ on:
         description: "Optional: specific topic"
         required: false
 
+permissions:
+  contents: write              # state: daily run commit push ke liye (403 fix)
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false

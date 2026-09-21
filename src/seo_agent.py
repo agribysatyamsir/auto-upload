@@ -92,13 +92,29 @@ def fallback_seo(topic: str, niche: dict) -> dict:
 def _fit_tags(tags: list, limit: int = 490) -> list:
     out, used = [], 0
     for t in tags:
-        t = t.strip().lower()
-        if not t or t in out:
+        t = str(t).strip().strip("#").strip().lower()
+        t = " ".join(t.split())
+        if not t or len(t) < 2 or len(t) > 60 or t in out:
             continue
         if used + len(t) + 2 > limit:
             break
         out.append(t)
         used += len(t) + 2
+    return out[:30]
+
+
+def _norm_list(v, fallback: list) -> list:
+    """LLM kabhi str de de, kabhi list — YouTube invalidTags se bachao."""
+    if isinstance(v, str):
+        v = [x for x in v.replace("\n", ",").split(",")]
+    if not isinstance(v, list):
+        v = fallback
+    out, seen = [], set()
+    for x in v:
+        x = " ".join(str(x).split()).strip()
+        if x and x.lower() not in seen:
+            seen.add(x.lower())
+            out.append(x)
     return out
 
 
@@ -126,11 +142,12 @@ def build_seo(topic: str, niche: dict, sc: dict | None = None) -> dict:
             f"Script beats (context): {json.dumps([b.get('t', '') for b in (sc or {}).get('beats', [])][:6], ensure_ascii=False)}\n\n"
             f'SIRF JSON do: {{"title":"...","hook":"para1","overview":"para2",'
             f'"bullets":["5-7"],"hashtags":["#..."],"tags":["30"],"keywords":["35"]}}')
-        title = str(out.get("title", ""))[:100]
-        bullets = [str(b) for b in out.get("bullets", [])][:8]
-        tags = _fit_tags([str(t) for t in out.get("tags", [])])
-        hashtags = [h if h.startswith("#") else "#" + h for h in out.get("hashtags", [])][:12]
-        keywords = [str(k) for k in out.get("keywords", [])][:40]
+        title = " ".join(str(out.get("title", "")).split())[:100]
+        bullets = _norm_list(out.get("bullets"), [])[:8]
+        tags = _fit_tags(_norm_list(out.get("tags"), []))
+        hashtags = _norm_list(out.get("hashtags"), [])
+        hashtags = [h if h.startswith("#") else "#" + h for h in hashtags][:12]
+        keywords = _norm_list(out.get("keywords"), [])[:40]
         trend = _trending(topic, cfg, 3)
         blob = " ".join(tags + keywords).lower()
         for tr in trend:                       # trending tokens LAZMI

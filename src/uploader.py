@@ -29,11 +29,25 @@ def _tokens() -> str:
     return r.json()["access_token"]
 
 
+def _safe_tags(tags: list | None) -> list:
+    """YouTube 400 invalidTags se bachao: saaf, dedup, total ≤490 chars."""
+    out, used = [], 0
+    for t in (tags or ["hindi", "shorts", "agriculture"]):
+        t = " ".join(str(t).split()).strip().strip("#").strip()
+        if not t or len(t) > 60 or t.lower() in [o.lower() for o in out]:
+            continue
+        if used + len(t) + 2 > 490:
+            break
+        out.append(t)
+        used += len(t) + 2
+    return out[:30] or ["agriculture", "hindi", "shorts"]
+
+
 def upload(video: Path, title: str, description: str, thumb: Path | None,
            privacy: str = "unlisted", tags: list | None = None) -> dict:
     access = _tokens()
     meta = json.dumps({"snippet": {"title": title[:100], "description": description[:4800],
-                                   "tags": (tags or ["hindi", "shorts", "agriculture"])[:60],
+                                   "tags": _safe_tags(tags),
                                    "categoryId": "27"},
                        "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False}}).encode()
     vid = video.read_bytes()
