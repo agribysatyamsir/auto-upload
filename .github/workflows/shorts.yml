@@ -1,8 +1,9 @@
 name: shorts
 
 on:
-  schedule:
-    - cron: "0 7 * * *"          # 12:30 IST — 1 video/day
+  # USER DIRECTIVE (21 Sep): project HOLD — schedule OFF jab tak user na kahe
+  # schedule:
+  #   - cron: "0 7 * * *"          # 12:30 IST — 1 video/day
   workflow_dispatch:
     inputs:
       topic:

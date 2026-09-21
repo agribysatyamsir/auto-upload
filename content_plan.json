@@ -5,10 +5,17 @@
     "आलू की खेती में मुनाफा बढ़ाने के 3 तरीके",
     "गेहूं में यूरिया डालने का सही समय",
     "Mulching – Types, Advantages & Disadvantages",
+<<<<<<< HEAD
     "Tillage – Types, Objectives & Importance",
     "Mulching – Types, Advantages & Disadvantages"
   ],
   "queue": [
+=======
+    "Tillage – Types, Objectives & Importance"
+  ],
+  "queue": [
+    "Mulching – Types, Advantages & Disadvantages",
+>>>>>>> 582db3a (PROJECT HOLD: schedule OFF + Telegram disabled (TELEGRAM_ENABLED=1 required) — user directive 21 Sep)
     "Tillage – Types, Objectives & Importance",
     "Irrigation – Types & Methods",
     "Animal Breeding – Types & Methods",
@@ -179,6 +186,7 @@
       "privacy": "unlisted",
       "url": "https://youtube.com/shorts/Kc0GFXzqnRY",
       "ts": "2026-09-21T11:46Z"
+<<<<<<< HEAD
     },
     {
       "topic": "Mulching – Types, Advantages & Disadvantages",
@@ -186,6 +194,8 @@
       "privacy": "unlisted",
       "url": "https://youtube.com/shorts/dJ8G_zWYAZY",
       "ts": "2026-09-21T13:56Z"
+=======
+>>>>>>> 582db3a (PROJECT HOLD: schedule OFF + Telegram disabled (TELEGRAM_ENABLED=1 required) — user directive 21 Sep)
     }
   ]
 }
