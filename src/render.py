@@ -151,10 +151,8 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
     for i, sc in enumerate(scenes):
         seg = tmp / f"seg{i}.mp4"
         want = max(1.2, float(sc.get("dur", per)))   # beat-synced durations
-        ov = None
-        if sc.get("text") or sc.get("overlay"):
-            ov = tmp / f"cap{i}.png"
-            caption_png(sc.get("text", ""), ov, sc.get("overlay", ""))
+        ov = None   # USER: no captions — double-caption issue (cards me text
+        # baked hota hai, media par koi text overlay nahi)
         if sc["type"] == "video":
             durs.append(_seg_video(Path(sc["path"]), seg, want, ov))
         else:

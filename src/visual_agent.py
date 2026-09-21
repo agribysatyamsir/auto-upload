@@ -70,10 +70,16 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
     pal = niche["visuals"]["color_palette"]
     beats = sc["beats"]
     scenes = []
-    h = visuals.card(beats[0]["t"], pal, run / "card0.png", big=True)
-    h["dur"] = durs[0]
-    h["overlay"] = beats[0].get("overlay", "")
-    scenes.append(h)
+    # HOOK: real footage se start (user: green-screen+text start boring tha).
+    # search-first (imp=1) — koi LLM key nahi; fail → card fallback.
+    f0 = plan_segment({**beats[0], "imp": min(1, int(beats[0].get("imp", 1) or 1))},
+                      0, run, durs[0])
+    if isinstance(f0, dict) and "ab" in f0:
+        f0 = f0["ab"][0]
+    if f0 is None:
+        f0 = visuals.card(beats[0]["t"], pal, run / "card0.png", big=True)
+    f0["dur"] = durs[0]
+    scenes.append(f0)
     for i, b in enumerate(beats[1:-1], start=1):
         f = plan_segment(b, i, run, durs[i])
         if isinstance(f, dict) and "ab" in f:      # A/B dual-visual split
