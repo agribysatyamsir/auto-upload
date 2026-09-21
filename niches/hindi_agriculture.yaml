@@ -122,6 +122,38 @@ topic_seeds:
   - "सींचाई की विधियाँ और जल बचत"
   - "खरपतवार नियंत्रण के सही तरीके"
 
+seo:
+  title_suffixes:
+    - "AGTA & AFO"
+    - "ICAR JRF"
+    - "IBPS AFO"
+    - "NABARD Grade A"
+    - "BPSC BAO"
+  exams: ["UPSSSC AGTA", "IBPS AFO", "NABARD Grade A", "FCI", "BPSC BAO", "ICAR JRF"]
+  trending_pool:
+    - "agta new vacancy"
+    - "ibps afo preparation"
+    - "icar jrf agronomy"
+    - "agriculture competitive exams"
+    - "nabard grade a agriculture"
+    - "fci agriculture syllabus"
+    - "agriculture field officer preparation"
+    - "agta new vacancy 2026"
+  join_block: |
+    📢 Join Our Study Platforms
+
+    📲 Telegram Quiz Channel
+
+    https://t.me/agriquizworld
+
+    📲 Agriculture Learning Channel
+
+    https://t.me/agrilearningpoint
+
+    📞 WhatsApp Guidance
+
+    7985169157
+
 discovery:
   # Research gate — har number/claim in sources se trace ho, training knowledge se nahi
   sources:

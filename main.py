@@ -11,8 +11,8 @@ import os
 import sys
 import time
 
-from src import (config, llm, notify, render, script_agent, tts, uploader,
-                 visual_agent, visuals)
+from src import (config, llm, notify, render, script_agent, seo_agent, tts,
+                 uploader, visual_agent, visuals)
 
 
 def pick_music(topic: str):
@@ -74,20 +74,22 @@ def main() -> int:
                                          .get("duck_volume_speech", 0.10)),
                               seed=topic)
 
-        # 5) thumbnail + upload — fail-closed
+        # 5) SEO pack (title/desc/tags/hashtags) + thumbnail + upload — fail-closed
+        seo = seo_agent.build_seo(topic, niche, sc)
         thumb = visuals.make_thumbnail(niche, sc, run)
-        desc = sc["beats"][0]["t"] + " | " + niche["display_name"]
+        desc = seo["description"]
         if music:
             desc += "\n🎵 Music: Kevin MacLeod (incompetech.com), CC-BY"
-        res = uploader.upload(video, sc["title"], desc,
-                              thumb, privacy=config.env("PRIVACY_STATUS", "unlisted"))
+        res = uploader.upload(video, seo["title"], desc,
+                              thumb, privacy=config.env("PRIVACY_STATUS", "unlisted"),
+                              tags=seo["tags"])
 
         # 6) ledger + notify
         plan["used_topics"].append(topic)
         plan["videos"].append({"topic": topic, **res,
                                "ts": time.strftime("%Y-%m-%dT%H:%MZ")})
         save_plan(plan)
-        notify.send(f"✅ Unlisted upload ho gaya:\n{res['url']}\nTitle: {sc['title']}")
+        notify.send(f"✅ Unlisted upload ho gaya:\n{res['url']}\nTitle: {seo['title']}")
         print("DONE", res["url"])
         return 0
     except Exception as e:

@@ -30,10 +30,10 @@ def _tokens() -> str:
 
 
 def upload(video: Path, title: str, description: str, thumb: Path | None,
-           privacy: str = "unlisted") -> dict:
+           privacy: str = "unlisted", tags: list | None = None) -> dict:
     access = _tokens()
-    meta = json.dumps({"snippet": {"title": title[:100], "description": description[:400],
-                                   "tags": ["hindi", "shorts", "agriculture"],
+    meta = json.dumps({"snippet": {"title": title[:100], "description": description[:4800],
+                                   "tags": (tags or ["hindi", "shorts", "agriculture"])[:60],
                                    "categoryId": "27"},
                        "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False}}).encode()
     vid = video.read_bytes()
