@@ -16,9 +16,9 @@ from . import config
 
 FPS = 25
 PRE_W, PRE_H = 1620, 2880
-XF = 0.35
-TRANSITIONS = ["fade", "slideleft", "slideright", "smoothleft",
-               "circleopen", "wipeleft", "radial", "coverleft"]
+XF = 0.5   # longer, smoother blend (user directive: smooth transitions only)
+TRANSITIONS = ["fade", "dissolve", "smoothleft", "smoothright",
+               "radial", "circleopen"]   # harsh slide/wipe/cover family hata di
 VARIANTS = ["zin", "zout", "panl", "panr"]
 
 

@@ -15,6 +15,11 @@ def _search_route(seg: dict, i: int, run, want_dur: float):
     pool = search_agent.search_all(seg, run, i)
     if not pool:
         return None
+    # USER RULE: pool me VIDEO nahi → pehle GEN try karo, mismatched photo nahi
+    if not any(c.get("type") == "video" for c in pool):
+        g = _gen_route(seg, i, run)
+        if g and g.get("route") == "gen":
+            return g
     picks = score_agent.pick_best(pool, seg, want_dur, two=want_dur >= 4.0)
     if not picks:
         return None

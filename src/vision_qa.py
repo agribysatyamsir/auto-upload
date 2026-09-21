@@ -14,8 +14,34 @@ GEM = "https://generativelanguage.googleapis.com/v1beta"
 MISTRAL = "https://api.mistral.ai/v1"
 
 
+import hashlib
+import json
+
+from . import config
+
+MAX_QA_PER_RUN = 6          # KEY DISCIPLINE: vision calls capped per run
+_qa_count = 0
+
+
 def _first(env: str) -> str:
     return (os.environ.get(env, "").split(",") or [""])[0].strip()
+
+
+def _sticky() -> list:
+    """Jo provider pichli baar chala, use pehle try karo (429 waste band)."""
+    p = config.STATE / "qa_provider.txt"
+    pref = p.read_text().strip() if p.exists() else ""
+    order = ["mistral", "gemini"]
+    if pref in order:
+        order = [pref] + [x for x in order if x != pref]
+    return order
+
+
+def _save_sticky(name: str):
+    try:
+        (config.STATE / "qa_provider.txt").write_text(name)
+    except Exception:
+        pass
 
 
 def _frame(path: Path) -> Path | None:
@@ -78,14 +104,27 @@ def _ask_gemini(b64: str, q: str) -> str | None:
 
 
 def frame_matches(path: Path, vis: str, phase: str = "") -> bool:
+    global _qa_count
     if not Path(path).exists():
         return True
+    # result-cache: same clip+vis dobara check nahi (key bachat)
+    cp = config.STATE / "qa_cache.json"
+    try:
+        cache = json.loads(cp.read_text()) if cp.exists() else {}
+    except Exception:
+        cache = {}
+    key = hashlib.md5(f"{Path(path).stat().st_size}:{vis[:50]}".encode()).hexdigest()
+    if key in cache:
+        return bool(cache[key])
+    if _qa_count >= MAX_QA_PER_RUN:
+        return True                      # quota discipline — fail-open
     fr = _frame(Path(path))
     if fr is None:
         return True
     b64 = _b64_small(fr)
     q = _question(vis, phase)
-    for name, ask in (("mistral", _ask_mistral), ("gemini", _ask_gemini)):
+    for name in _sticky():
+        ask = _ask_mistral if name == "mistral" else _ask_gemini
         try:
             txt = ask(b64, q)
         except Exception as e:
@@ -94,7 +133,14 @@ def frame_matches(path: Path, vis: str, phase: str = "") -> bool:
         if txt is None:
             print(f"[qa] {name}: busy/429 — next")
             continue
+        _save_sticky(name)
+        _qa_count += 1
         ok = "YES" in txt.upper()
+        cache[key] = ok
+        try:
+            cp.write_text(json.dumps(cache))
+        except Exception:
+            pass
         print(f"[qa] {'✅' if ok else '❌'} {Path(path).name} ({name}): {txt.strip()[:20]}")
         return ok
     return True

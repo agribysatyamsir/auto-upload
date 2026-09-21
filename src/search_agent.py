@@ -1,7 +1,8 @@
 """Search Agent — MULTIPLE SOURCES se footage candidates per segment-brief.
 
 Sources (priority): Pexels videos → Pixabay videos → Pexels photos →
-Pixabay photos → Archive.org. Har candidate normalized:
+Pixabay photos → Google Images (scrape, no key) → Archive.org. Har candidate
+normalized:
 {source, id, type, path, dur, w, h, size, tags}
 Dedup: ek run me same clip dobara nahi (USED ids).
 Research: OpenMontage multi-source corpus + AutoShorts Pexels→Pixabay fallback.
@@ -171,6 +172,53 @@ def pixabay_photo_cands(q: str, run, idx: int, n: int = 2) -> list:
     return out
 
 
+def google_image_cands(q: str, run, idx: int, n: int = 3) -> list:
+    """Google Images — best-effort HTML scrape (koi API key nahi).
+
+    User directive: Pexels/Pixabay par match na mile to Google se lao.
+    Google ke result-page me images ["url",height,width] JSON-blobs me aati
+    hain — wahi parse karte hain. Thumb/CDN-hosts filter.
+    """
+    out = []
+    import re
+    import hashlib
+    try:
+        r = _get("https://www.google.com/search",
+                 params={"q": q, "tbm": "isch", "hl": "en"},
+                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; "
+                          "x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/124.0 Safari/537.36"})
+        if not r.ok:
+            return out
+        urls = re.findall(r'\["(https?://[^"\\\s]+?\.(?:jpg|jpeg|png))",(\d+),(\d+)\]',
+                          r.text)
+        seen = set()
+        for u, hh, ww in urls:
+            host = u.split("/")[2]
+            if any(b in host for b in ("google", "gstatic", "ytimg", "googleapis")):
+                continue
+            if u in seen:
+                continue
+            seen.add(u)
+            cid = hashlib.md5(u.encode()).hexdigest()[:12]
+            if ("google", cid) in USED:
+                continue
+            p = _save(u, f"cand{idx}_{n - len(out)}g.jpg", run, min_bytes=30_000)
+            if not p:
+                continue
+            USED.add(("google", cid))
+            out.append({"source": "google", "id": cid, "type": "image", "path": p,
+                        "dur": 5.0, "w": int(ww), "h": int(hh),
+                        "size": p.stat().st_size, "tags": q})
+            if len(out) >= n:
+                break
+        if out:
+            print(f"[search] google-images: {len(out)} images")
+    except Exception as e:
+        print(f"[search] google-images: {str(e)[:60]}")
+    return out
+
+
 def archive_cands(q: str, run, idx: int, n: int = 1) -> list:
     old = visuals.archive_videos(q, n=n)
     for j, o in enumerate(old):
@@ -189,7 +237,7 @@ def search_all(brief: dict, run, idx: int, max_cands: int = 6) -> list:
     pool, per = [], 0
     for q in qs:
         for fn in (pexels_video_cands, pixabay_video_cands,
-                   pexels_photo_cands, pixabay_photo_cands):
+                   pexels_photo_cands, pixabay_photo_cands, google_image_cands):
             got = fn(q, run, idx * 100 + per, 2)
             per += 1
             pool += got

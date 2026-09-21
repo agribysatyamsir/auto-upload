@@ -4,37 +4,25 @@ description: "Hindi agriculture shorts: fasal, khaad, sinchai, sarkari yojana, m
 language: "hi"
 
 script:
-  tone: "bharosemand, practical, desi — jaise ek tajurbekar kisan dost samjha raha ho"
-  pacing: "seedha kaam ki baat; pehle fayda, phir tarika, phir savdhani"
-  perspective: "kisan ka dost — na guru, na salesman"
-  word_count: "100 to 140"   # ~30-40 sec Shorts sweet spot (research v2)
+  tone: "warm coaching teacher — jaise sir quick revision karwa rahe hon (education channel)"
+  pacing: "definition → types → advantages → disadvantages → exam one-liner → CTA"
+  perspective: "Agri Learning Point ka teacher — clear, exam-oriented, friendly"
+  word_count: "100 to 150"
   hook_formulas:
-    - "यह एक गलती पूरी {topic} फसल खा जाती है"
-    - "{topic} का सच कोई नहीं बताता"
-    - "अगर आप भी {topic} में नुकसान उठा रहे हो, तो रुक जाओ"
-    - "90% किसान {topic} में यही भूल करते हैं"
-    - "यह वीडियो देखने के बाद {topic} कभी नहीं बिगड़ेगी"
-    - "{topic} — पहले यह गलती बंद करो"
+    - "जय हिंद दोस्तो! आज quick समझेंगे {topic}"
+    - "जय हिंद दोस्तो! {topic} — एक बार में बिल्कुल clear"
+    - "जय हिंद दोस्तो! आज का टॉपिक {topic} — exam point of view से"
   hooks:
-    - id: galti_warn
-      template: "किसान भाई, {topic} में यह एक गलती फसल को खा जाएगी!"
-      when: "common mistake / nuksan wale topics"
-    - id: tariqa
-      template: "{crop} में पत्तियां पीली? असली वजह और इलाज — 40 second में।"
-      when: "crop care / deficiency topics"
-    - id: yojana
-      template: "सरकारी योजना का पैसा खाते में क्यों नहीं आया? तीन वजह सुन लो।"
-      when: "sarkari yojana / subsidy topics"
-    - id: bhav
-      template: "मंडी में {crop} के भाव आज — देखो क्या चल रहा है।"
-      when: "mandi bhav / market topics"
-    - id: mausam
-      template: "बारिश से पहले यह एक काम नहीं किया तो पछताओगे।"
-      when: "weather / season topics"
+    - id: warm_edu
+      template: "जय हिंद दोस्तो! आज quick समझेंगे {topic} — types, advantages और disadvantages।"
+      when: "sab topics (education channel default)"
+    - id: exam_angle
+      template: "जय हिंद दोस्तो! {topic} — exam me seedha poochha jane wala topic।"
+      when: "definition/classification topics"
   cta_variants:
-    - "वीडियो काम की लगे तो किसान भाइयों तक SHARE करो, और Agri Learning Point को SUBSCRIBE करो।"
-    - "SHARE करके किसी किसान की मदद करो — SUBSCRIBE बटन दबाना मत भूलना।"
-    - "अगली वीडियो में और काम की बात — SHARE + SUBSCRIBE जरूर करें।"
+    - "ऐसे ही important concepts के लिए follow करें Agri Learning Point — SHARE और SUBSCRIBE जरूर करें।"
+    - "आगे भी ऐसी quick पढ़ाई चाहिए तो Agri Learning Point को SUBSCRIBE करो, दोस्तो तक SHARE करो।"
+    - "Exam की तैयारी साथ में करें — SUBSCRIBE + SHARE करना मत भूलना।"
   forbidden_phrases:
     # AI-slop + khatarnak misinformation — kabhi nahi likhna
     - "चमत्कारी नुस्खा"

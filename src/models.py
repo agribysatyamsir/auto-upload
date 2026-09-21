@@ -202,7 +202,19 @@ class Registry:
         self.hp.write_text(json.dumps(self.health, indent=1))
 
     def catalog(self, prov):
+        # 12h disk-cache: /models calls quota/RPM khatte hain (KEY DISCIPLINE)
+        cf = config.STATE / "model_catalog.json"
         if prov["name"] not in self._cat:
+            disk = {}
+            if cf.exists():
+                try:
+                    disk = json.loads(cf.read_text())
+                except Exception:
+                    disk = {}
+            ent = disk.get(prov["name"])
+            if ent and time.time() - ent.get("ts", 0) < 12 * 3600 and ent.get("ids"):
+                self._cat[prov["name"]] = ent["ids"]
+                return ent["ids"]
             ids = []
             for k in self._keys(prov):
                 try:
@@ -211,6 +223,9 @@ class Registry:
                 except Exception:
                     continue
             self._cat[prov["name"]] = ids
+            if ids:
+                disk[prov["name"]] = {"ids": ids, "ts": time.time()}
+                cf.write_text(json.dumps(disk))
         return self._cat[prov["name"]]
 
     def chat(self, prompt: str, json_mode: bool = True) -> dict:

@@ -36,7 +36,8 @@ def _trending(topic: str, cfg: dict, n: int = 3) -> list:
 
 def _base_title(topic: str, cfg: dict) -> str:
     head, _, rest = topic.partition("–")
-    t = f"{head.strip()} in Agriculture: {rest.strip()}" if rest.strip() else topic
+    t = f"{head.strip()} in Agriculture: {rest.strip()}" if rest.strip() else \
+        f"{topic} in Agriculture: Types, Advantages & Disadvantages"
     return f"{t} | {_suffix(topic, cfg)}"[:100]
 
 

@@ -39,10 +39,14 @@ lazmi, taaki Visual Agent bina soche exact footage dhoond/generate kar sake):
             "overlay":"2-4 word on-screen text burst ya empty string",
             "imp":2}}],
  "cta":"share+subscribe + loop cue, 6-14 words"}}
-beats: 12 se 15. beat0=hook (5-8 words, answer mat do), beat1-2=agitation
-(SIRF dard — solution yahan MAT batao), beech=solution steps (har beat ek nayi
-baat), ek payoff (hook ka promise poora), last=CTA+loop (hook wali galti ka
-dubara zikr). imp=3 sirf hook aur sabse important step ke liye."""
+beats: 10 se 15, EDU-STRUCTURE isi order me:
+  beat0 = WARM OPENER: "जय हिंद दोस्तो! आज quick समझेंगे …" + topic promise
+  beat1-2 = DEFINITION: "सबसे पहले समझो X क्या है" + crisp def + objective
+  beat3-4 = TYPES: "First — …" / "Second — …" har type me 2-3 concrete examples
+  beat5-6 = ADVANTAGES (3-4 benefits) | beat7 = DISADVANTAGES (2-3 limits)
+  beat8 = EXAM ONE-LINER: "Exam के लिए one-line याद रखो: X = A + B + C"
+  last = CTA: follow Agri Learning Point + SHARE + SUBSCRIBE (subscribe LAZMI)
+imp=3: definition aur types beats ke liye (exact visuals sabse important)."""
     return llm.generate(prompt)
 
 
@@ -70,9 +74,16 @@ def make_script(niche: dict, topic: str) -> dict:
             break
         out = write_beats(niche, topic)
 
-    # ── CRITIC pass (KB-checklist se fix; 429-storm me ek retry) ──────────
+    # ── CRITIC pass: sirf jab writer heuristics fail kare (KEY BACHAT) ────
     import time
-    for attempt in range(2):
+    beats0 = [b for b in (out.get("beats") or []) if str(b.get("t", "")).strip()]
+    narr0 = " ".join(b["t"] for b in beats0)
+    clean = (10 <= len(beats0) <= 15 and 100 <= len(narr0.split()) <= 150
+             and "जय हिंद" in beats0[0]["t"] and "सब्सक्राइब" in narr0[-120:]
+             and not llm.check_forbidden(narr0, forbidden))
+    if clean:
+        print("[critic] skipped — writer clean (key saved)")
+    for attempt in range(2 if not clean else 0):
         try:
             crit = llm.generate(f"{_kb()}\n\n{CRITIC}\n\nSCRIPT JSON:\n"
                                 + json.dumps(out, ensure_ascii=False))
