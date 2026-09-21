@@ -28,14 +28,16 @@ Tone: {s['tone']} | Total words target: {s['word_count']}
 
 SIRF valid JSON do:
 {{"title":"40-60 chars Devanagari",
- "beats":[{{"t":"spoken Hindi line 6-10 words, grammatically poori",
+ "beats":[{{"t":"spoken Hindi line 5-9 words, grammatically poori, nayi jankari",
             "vis":"english: concrete dikhti cheez + phase (e.g. 'hands sowing wheat seeds in soil')",
             "phase":"sowing|growth|treatment|harvest|result|general",
             "imp":2,
             "q":"2-4 english concrete nouns"}}],
- "cta":"share+subscribe line 6-12 words"}}
-beats: 12 se 15. beat0=hook, beat1-2=agitation, beech=solution steps,
-ek payoff, last=CTA. imp=3 sirf hook aur sabse important step ke liye."""
+ "cta":"share+subscribe + loop cue, 6-14 words"}}
+beats: 12 se 15. beat0=hook (5-8 words, answer mat do), beat1-2=agitation
+(SIRF dard — solution yahan MAT batao), beech=solution steps (har beat ek nayi
+baat), ek payoff (hook ka promise poora), last=CTA+loop (hook wali galti ka
+dubara zikr). imp=3 sirf hook aur sabse important step ke liye."""
     return llm.generate(prompt)
 
 

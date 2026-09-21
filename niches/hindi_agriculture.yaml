@@ -7,7 +7,7 @@ script:
   tone: "bharosemand, practical, desi — jaise ek tajurbekar kisan dost samjha raha ho"
   pacing: "seedha kaam ki baat; pehle fayda, phir tarika, phir savdhani"
   perspective: "kisan ka dost — na guru, na salesman"
-  word_count: "110 to 150"   # ~35-45 sec Shorts sweet spot
+  word_count: "100 to 140"   # ~30-40 sec Shorts sweet spot (research v2)
   hook_formulas:
     - "यह एक गलती पूरी {topic} फसल खा जाती है"
     - "{topic} का सच कोई नहीं बताता"
