@@ -119,8 +119,9 @@ def _seg_image(img: Path, out: Path, frames: int, variant: str, overlay: Path = 
 def _seg_video(vid: Path, out: Path, want: float, overlay: Path = None) -> float:
     have = duration(vid)
     d = max(1.5, min(want, have))
+    # halka cinematic grade: saturation+contrast boost (stock footage pop)
     base = ("scale=1080:1920:force_original_aspect_ratio=increase,"
-            "crop=1080:1920,fps=25,setsar=1")
+            "crop=1080:1920,fps=25,setsar=1,eq=saturation=1.12:contrast=1.06")
     if overlay:
         fc = f"[0:v]{base}[v];[v][1:v]overlay=0:0[out]"
         cmd = [ffmpeg_bin(), "-y", "-i", str(vid), "-i", str(overlay),
@@ -220,7 +221,8 @@ def render(scenes: list, audio: Path, out: Path, music: Path | None = None,
                    f"h=10:color=#FF9800@0.95:t=fill")
         vf += "[vout]"
         fc.append(vf)
-        parts = ["[1:a]"]
+        fc.append("[1:a]loudnorm=I=-14:TP=-1.5:LRA=11[narr]")  # broadcast loudness
+        parts = ["[narr]"]
         if has_music:
             fc.append(f"[2:a]volume={duck},afade=t=in:d=0.8,"
                       f"afade=t=out:st={max(0, total_v - 1.5)}:d=1.5[bgm]")

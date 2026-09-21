@@ -7,29 +7,30 @@ Build karta hai synced scenes: hook-card → per-beat asset → SHARE+SUBSCRIBE 
 """
 from pathlib import Path
 
-from . import gen, vision_qa, visuals
+from . import gen, score_agent, search_agent, vision_qa, visuals
 
 
-def _search_route(seg: dict, i: int, run):
-    """search_q chain: primary → fallback; har clip phase-locked + vision-QA."""
-    qs = seg.get("search_q") or [seg.get("q", "")]
-    if isinstance(qs, str):
-        qs = [qs]
-    for j, q in enumerate(qs[:2]):
-        if not str(q).strip():
-            continue
-        locked = visuals.locked_q({"q": q, "phase": seg.get("phase", "")}, i + j)
-        clips = visuals._fetch_n(locked, run, i * 10 + j, 1)
-        if clips and vision_qa.frame_matches(clips[0]["path"], seg.get("vis", ""),
-                                             str(seg.get("phase", ""))):
-            clips[0]["route"] = "search"
-            print(f"[vagent] seg{i}: search ✅ {q}")
-            return clips[0]
-    return None
+def _search_route(seg: dict, i: int, run, want_dur: float):
+    """Multi-source pool → Score Agent best (ya A/B top-2)."""
+    pool = search_agent.search_all(seg, run, i)
+    if not pool:
+        return None
+    picks = score_agent.pick_best(pool, seg, want_dur, two=want_dur >= 4.0)
+    if not picks:
+        return None
+    if len(picks) == 2:
+        for p_ in picks:
+            p_["route"] = "search-ab"
+        print(f"[vagent] seg{i}: A/B {picks[0]['source']}+{picks[1]['source']}")
+        return {"ab": picks}
+    picks[0]["route"] = "search"
+    print(f"[vagent] seg{i}: search ✅ {picks[0]['source']} "
+          f"score={score_agent.score(picks[0], seg, want_dur)}")
+    return picks[0]
 
 
 def _gen_route(seg: dict, i: int, run):
-    """gen_prompt se exact-match AI image (2 seeds + QA). imp=3 pe i2v try."""
+    """gen_prompt se exact-match AI image (2 seeds + QA)."""
     prompt = seg.get("gen_prompt") or (
         f"realistic vertical 9:16 photo, {seg.get('vis', 'indian wheat field')}, "
         f"indian farm, natural daylight, no text")
@@ -44,16 +45,16 @@ def _gen_route(seg: dict, i: int, run):
     return None
 
 
-def plan_segment(seg: dict, i: int, run):
-    """Brief → asset dict (type/path/route) ya None (card fallback)."""
+def plan_segment(seg: dict, i: int, run, want_dur: float = 3.5):
+    """Brief → asset dict | {"ab":[a,b]} | None (card fallback)."""
     imp = int(seg.get("imp", 1) or 1)
     order = ("gen", "search") if imp >= 2 else ("search", "gen")
     for route in order:
         asset = (_gen_route(seg, i, run) if route == "gen"
-                 else _search_route(seg, i, run))
+                 else _search_route(seg, i, run, want_dur))
         if asset:
             return asset
-    print(f"[vagent] seg{i:}: sab routes fail → card fallback")
+    print(f"[vagent] seg{i}: sab routes fail → card fallback")
     return None
 
 
@@ -69,7 +70,14 @@ def build_synced(niche: dict, sc: dict, run, durs: list) -> list:
     h["overlay"] = beats[0].get("overlay", "")
     scenes.append(h)
     for i, b in enumerate(beats[1:-1], start=1):
-        f = plan_segment(b, i, run)
+        f = plan_segment(b, i, run, durs[i])
+        if isinstance(f, dict) and "ab" in f:      # A/B dual-visual split
+            for k, asset in enumerate(f["ab"]):
+                asset["dur"] = round(durs[i] / 2, 2)
+                asset["text"] = b["t"]
+                asset["overlay"] = b.get("overlay", "") if k == 0 else ""
+                scenes.append(asset)
+            continue
         if f is None:
             f = visuals.card(b["t"], pal, run / f"cb{i}.png")
         f["dur"] = round(durs[i], 2)
